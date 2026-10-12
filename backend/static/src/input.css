@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.htmx-indicator { opacity: 0; transition: opacity .2s; }
+.htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }
+select, input[type=number], input[type=text], input[type=password] {
+  margin-top: 4px; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px;
+}
