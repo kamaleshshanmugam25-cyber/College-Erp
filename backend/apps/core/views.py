@@ -143,8 +143,7 @@ DEFAULT_ROLE_ACCESS = {
         "general-ledger", "financial-reports", "user-management", "role-permissions", "audit-logs"
     ],
     Roles.FINANCE_USER: [
-        "finance-dashboard", "fee-structures", "invoices-receipts", "scholarships",
-        "general-ledger", "financial-reports"
+        "finance-dashboard", "fee-structures", "invoices-receipts"
     ],
     Roles.ACCOUNTANT: [
         "finance-dashboard", "fee-structures", "invoices-receipts", "scholarships",
@@ -177,6 +176,11 @@ def get_accessible_modules_for_user(user) -> list:
     roles = list(user_roles(user))
     if Roles.SUPER_ADMIN in roles:
         return ALL_MODULE_IDS
+
+    # Check if user has explicit custom module assignment from Finance Admin
+    profile = getattr(user, "erp_profile", None)
+    if profile and profile.has_custom_permissions and isinstance(profile.custom_modules, list):
+        return [mid for mid in ALL_MODULE_IDS if mid in profile.custom_modules]
 
     accessible = set()
     for role_name in roles:

@@ -48,6 +48,7 @@ def require_admin(view_func):
 
 def serialize_user(u):
     """Serializes a User instance into a clean dictionary."""
+    from apps.core.views import get_accessible_modules_for_user
     profile = getattr(u, "erp_profile", None)
     emp_profile = getattr(u, "employee_profile", None)
 
@@ -55,12 +56,16 @@ def serialize_user(u):
     staff_id = ""
     phone = ""
     notes = ""
+    has_custom_permissions = False
+    custom_modules = []
 
     if profile:
         department = profile.department
         staff_id = profile.staff_id or ""
         phone = profile.phone or ""
         notes = profile.notes or ""
+        has_custom_permissions = getattr(profile, "has_custom_permissions", False)
+        custom_modules = getattr(profile, "custom_modules", []) or []
     elif emp_profile:
         department = emp_profile.department
         staff_id = emp_profile.staff_id or ""
@@ -81,6 +86,9 @@ def serialize_user(u):
         "staff_id": staff_id,
         "phone": phone,
         "notes": notes,
+        "has_custom_permissions": has_custom_permissions,
+        "custom_modules": custom_modules,
+        "accessible_modules": get_accessible_modules_for_user(u),
         "is_active": u.is_active,
         "is_superuser": u.is_superuser,
         "is_staff": u.is_staff,
@@ -414,7 +422,19 @@ def user_detail_api(request, user_id):
                 profile.phone = str(phone).strip()
             if notes is not None:
                 profile.notes = str(notes).strip()
+
+            has_custom_perms = data.get("has_custom_permissions")
+            custom_mods = data.get("custom_modules")
+            if has_custom_perms is not None:
+                profile.has_custom_permissions = bool(has_custom_perms)
+                audit_changes["has_custom_permissions"] = profile.has_custom_permissions
+            if custom_mods is not None and isinstance(custom_mods, list):
+                from apps.core.views import ALL_MODULE_IDS
+                profile.custom_modules = [m for m in custom_mods if m in ALL_MODULE_IDS]
+                audit_changes["custom_modules"] = profile.custom_modules
+
             profile.save()
+            target_user.erp_profile = profile
 
             if audit_changes:
                 log_audit(

@@ -25,8 +25,21 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
-  Briefcase
+  Briefcase,
+  Zap,
+  CheckSquare,
+  Square,
+  SlidersHorizontal
 } from 'lucide-react';
+
+const FINANCE_MODULES = [
+  { id: 'fee-structures', label: 'Fee Structures & Calculator', desc: 'Tuition slabs, fee calculator & student dues', category: 'Fees' },
+  { id: 'invoices-receipts', label: 'Invoices & Receipts', desc: 'Official student invoices, counter collection & PDF receipts', category: 'Fees' },
+  { id: 'finance-dashboard', label: 'Financial Overview', desc: 'Collections, inflow pillars & overview cards', category: 'Analytics' },
+  { id: 'scholarships', label: 'Scholarships & Waivers', desc: 'Merit concessions, quota waivers & grants', category: 'Concessions' },
+  { id: 'general-ledger', label: 'General & Journal Ledger', desc: 'Double-entry vouchers & account books', category: 'Accounting' },
+  { id: 'financial-reports', label: 'Financial Reports', desc: 'Financial summaries, balance sheets & audit books', category: 'Accounting' },
+];
 
 const AVAILABLE_ROLES = [
   { id: 'Finance Admin', label: 'Finance Admin', description: 'Full financial authority, user management & access control', badgeClass: 'bg-blue-100 text-blue-800 border-blue-200' },
@@ -100,7 +113,30 @@ export function UserManagementView() {
 
   // Role change state
   const [selectedNewRole, setSelectedNewRole] = useState('');
+  const [hasCustomPermissions, setHasCustomPermissions] = useState(false);
+  const [selectedModules, setSelectedModules] = useState([]);
   const [submittingRoleChange, setSubmittingRoleChange] = useState(false);
+
+  const toggleModuleSelection = (modId) => {
+    setSelectedModules((prev) =>
+      prev.includes(modId) ? prev.filter((m) => m !== modId) : [...prev, modId]
+    );
+  };
+
+  const applyPresetModules = (preset) => {
+    if (preset === 'desk') {
+      setSelectedModules(['fee-structures', 'invoices-receipts']);
+      setHasCustomPermissions(true);
+    } else if (preset === 'desk_overview') {
+      setSelectedModules(['finance-dashboard', 'fee-structures', 'invoices-receipts']);
+      setHasCustomPermissions(true);
+    } else if (preset === 'all') {
+      setSelectedModules(FINANCE_MODULES.map((m) => m.id));
+      setHasCustomPermissions(true);
+    } else if (preset === 'clear') {
+      setSelectedModules([]);
+    }
+  };
 
   const notify = (msg) => {
     setSuccessMsg(msg);
@@ -185,8 +221,13 @@ export function UserManagementView() {
     if (!roleChangeUser || !selectedNewRole) return;
     setSubmittingRoleChange(true);
     try {
-      const res = await api.updateAdminUser(roleChangeUser.id, { role: selectedNewRole });
-      notify(`Role for ${roleChangeUser.username} updated to ${selectedNewRole}.`);
+      const payload = {
+        role: selectedNewRole,
+        has_custom_permissions: hasCustomPermissions,
+        custom_modules: hasCustomPermissions ? selectedModules : [],
+      };
+      const res = await api.updateAdminUser(roleChangeUser.id, payload);
+      notify(`Role & permissions for ${roleChangeUser.username} updated.`);
       setRoleChangeUser(null);
       loadUsers(pagination.page);
     } catch (err) {
@@ -245,7 +286,13 @@ export function UserManagementView() {
   // Open Role Assignment Modal
   const openRoleChangeModal = (u) => {
     setRoleChangeUser(u);
-    setSelectedNewRole(u.role || 'Accountant');
+    setSelectedNewRole(u.role || 'Finance User');
+    setHasCustomPermissions(Boolean(u.has_custom_permissions));
+    setSelectedModules(
+      Array.isArray(u.custom_modules) && u.custom_modules.length > 0
+        ? [...u.custom_modules]
+        : (u.role === 'Finance User' ? ['fee-structures', 'invoices-receipts'] : ['fee-structures', 'invoices-receipts', 'finance-dashboard'])
+    );
   };
 
   const getRoleBadge = (roleName) => {
@@ -465,13 +512,20 @@ export function UserManagementView() {
 
                       <td className="py-3 px-4">
                         <div className="flex flex-col gap-1 items-start">
-                          {getRoleBadge(u.role)}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {getRoleBadge(u.role)}
+                            {u.has_custom_permissions ? (
+                              <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                Custom ({u.custom_modules?.length || 0})
+                              </span>
+                            ) : null}
+                          </div>
                           <button
                             type="button"
                             onClick={() => openRoleChangeModal(u)}
-                            className="text-[10px] text-blue-600 hover:text-blue-800 hover:underline font-semibold cursor-pointer"
+                            className="text-[10px] text-blue-600 hover:text-blue-800 hover:underline font-bold cursor-pointer"
                           >
-                            Assign Role &rarr;
+                            Assign Role & Access &rarr;
                           </button>
                         </div>
                       </td>
@@ -722,18 +776,18 @@ export function UserManagementView() {
         </div>
       )}
 
-      {/* ASSIGN ROLE MODAL */}
+      {/* ASSIGN ROLE & MODULE ACCESS MODAL */}
       {roleChangeUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-xl w-full border border-slate-200 shadow-2xl overflow-hidden my-8">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Assign Institutional Role</h3>
-                  <p className="text-[11px] text-slate-500">Update system permissions for @{roleChangeUser.username}</p>
+                  <h3 className="text-sm font-bold text-slate-900">Assign Role & Module Access</h3>
+                  <p className="text-[11px] text-slate-500">Configure role and modular access for @{roleChangeUser.username}</p>
                 </div>
               </div>
               <button onClick={() => setRoleChangeUser(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
@@ -741,50 +795,175 @@ export function UserManagementView() {
               </button>
             </div>
 
-            <form onSubmit={handleRoleChangeSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleRoleChangeSubmit} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+              {/* User banner */}
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Current User</span>
-                  <span className="font-bold text-slate-900">{roleChangeUser.name}</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">User Account</span>
+                  <span className="font-bold text-slate-900">{roleChangeUser.name} (@{roleChangeUser.username})</span>
                 </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block text-right">Current Role</span>
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Current Role</span>
                   <span className="font-bold text-blue-700">{roleChangeUser.role}</span>
                 </div>
               </div>
 
+              {/* Step 1: Base Role Selection */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-2">Select New Role to Assign:</label>
-                <div className="space-y-2">
-                  {AVAILABLE_ROLES.map((r) => {
+                <label className="text-xs font-bold text-slate-800 block mb-1.5 flex items-center justify-between">
+                  <span>1. Assigned Institutional Role</span>
+                  <span className="text-[10px] font-normal text-slate-400">Select base role</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {AVAILABLE_ROLES.filter(r => r.id !== 'Super Admin').map((r) => {
                     const isSelected = selectedNewRole === r.id;
                     return (
-                      <div
+                      <button
                         key={r.id}
+                        type="button"
                         onClick={() => setSelectedNewRole(r.id)}
-                        className={`p-3 rounded-2xl border text-left cursor-pointer transition flex items-center justify-between ${
+                        className={`p-2.5 rounded-xl border text-left cursor-pointer transition flex items-center justify-between ${
                           isSelected
-                            ? 'border-blue-600 bg-blue-50/70 ring-1 ring-blue-500'
+                            ? 'border-blue-600 bg-blue-50/80 ring-1 ring-blue-500 shadow-2xs'
                             : 'border-slate-200 hover:bg-slate-50 hover:border-slate-300'
                         }`}
                       >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-xs text-slate-900">{r.label}</span>
-                            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${r.badgeClass}`}>
-                              {r.id}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-500 mt-0.5">{r.description}</p>
+                        <div className="min-w-0 pr-1">
+                          <div className="font-bold text-xs text-slate-900 truncate">{r.label}</div>
+                          <div className="text-[10px] text-slate-500 truncate">{r.id}</div>
                         </div>
-                        {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0" />}
-                      </div>
+                        {isSelected ? (
+                          <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                        ) : (
+                          <div className="w-3.5 h-3.5 rounded-full border border-slate-300 shrink-0" />
+                        )}
+                      </button>
                     );
                   })}
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+              {/* Step 2: Permission Assignment Policy */}
+              <div className="pt-2 border-t border-slate-100">
+                <label className="text-xs font-bold text-slate-800 block mb-2">
+                  <span>2. Modular Access Policy</span>
+                </label>
+
+                {/* Mode Selector */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setHasCustomPermissions(false)}
+                    className={`p-3 rounded-xl border text-left cursor-pointer transition ${
+                      !hasCustomPermissions
+                        ? 'border-blue-600 bg-blue-50/70 ring-1 ring-blue-500'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="font-bold text-xs text-slate-900">Standard Role Policy</div>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Inherits access from Role & Permissions matrix</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHasCustomPermissions(true);
+                      if (selectedModules.length === 0) {
+                        setSelectedModules(['fee-structures', 'invoices-receipts']);
+                      }
+                    }}
+                    className={`p-3 rounded-xl border text-left cursor-pointer transition ${
+                      hasCustomPermissions
+                        ? 'border-blue-600 bg-blue-50/70 ring-1 ring-blue-500'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
+                      <span>Custom Module Assignment</span>
+                      <span className="text-[9px] bg-amber-100 text-amber-800 px-1 py-0.2 rounded font-bold">Explicit</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Explicitly assign fee structures, invoices, etc.</p>
+                  </button>
+                </div>
+
+                {/* If Custom Module Assignment is selected */}
+                {hasCustomPermissions && (
+                  <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-3 animate-in fade-in duration-150">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[11px] font-bold text-slate-700">
+                        Assigned Modules ({selectedModules.length} selected):
+                      </span>
+                      {/* Presets */}
+                      <div className="flex items-center gap-1.5 text-[10px]">
+                        <button
+                          type="button"
+                          onClick={() => applyPresetModules('desk')}
+                          className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-blue-700 font-bold hover:bg-blue-50 cursor-pointer"
+                        >
+                          ⚡ Fees & Invoices
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyPresetModules('desk_overview')}
+                          className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-cyan-700 font-bold hover:bg-cyan-50 cursor-pointer"
+                        >
+                          ⚡ Front-Desk Suite
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyPresetModules('all')}
+                          className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-100 cursor-pointer"
+                        >
+                          All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => applyPresetModules('clear')}
+                          className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-600 cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {FINANCE_MODULES.map((mod) => {
+                        const isChecked = selectedModules.includes(mod.id);
+                        return (
+                          <div
+                            key={mod.id}
+                            onClick={() => toggleModuleSelection(mod.id)}
+                            className={`p-2.5 rounded-xl border text-left cursor-pointer transition flex items-start gap-2.5 ${
+                              isChecked
+                                ? 'bg-white border-blue-500 shadow-2xs text-slate-900'
+                                : 'bg-slate-100/50 border-slate-200 text-slate-500 hover:bg-white hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="pt-0.5 shrink-0">
+                              {isChecked ? (
+                                <CheckSquare className="w-4 h-4 text-blue-600" />
+                              ) : (
+                                <Square className="w-4 h-4 text-slate-400" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-bold leading-tight">
+                                {mod.label}
+                              </div>
+                              <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
+                                {mod.desc}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action buttons */}
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setRoleChangeUser(null)}
@@ -794,10 +973,10 @@ export function UserManagementView() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submittingRoleChange || selectedNewRole === roleChangeUser.role}
+                  disabled={submittingRoleChange}
                   className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
                 >
-                  {submittingRoleChange ? 'Updating...' : 'Assign Role'}
+                  {submittingRoleChange ? 'Saving...' : 'Save Role & Access'}
                 </button>
               </div>
             </form>

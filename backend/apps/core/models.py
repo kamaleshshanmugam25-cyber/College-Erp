@@ -103,6 +103,8 @@ class UserProfile(models.Model):
     staff_id = models.CharField(max_length=64, blank=True, null=True, db_index=True)
     phone = models.CharField(max_length=32, blank=True)
     notes = models.TextField(blank=True)
+    has_custom_permissions = models.BooleanField(default=False)
+    custom_modules = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
