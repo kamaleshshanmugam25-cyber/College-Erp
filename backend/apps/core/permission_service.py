@@ -8,7 +8,6 @@ MODULE_DEFINITIONS = [
     {"id": "scholarships", "name": "Scholarships & Waivers", "category": "Finance & Accounting"},
     {"id": "general-ledger", "name": "General & Journal Ledger", "category": "Finance & Accounting"},
     {"id": "financial-reports", "name": "Financial Reports & Audits", "category": "Finance & Accounting"},
-    {"id": "user-management", "name": "User Management", "category": "Administration & Security"},
     {"id": "role-permissions", "name": "Role & Permissions", "category": "Administration & Security"},
     {"id": "audit-logs", "name": "Audit Logs", "category": "Administration & Security"},
     {"id": "employee-lifecycle", "name": "Employee Lifecycle", "category": "HR & Operations"},

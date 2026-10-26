@@ -156,12 +156,12 @@ function MainApp() {
           return (
             <AccessDeniedView
               requiredRole="Finance Admin"
-              reason="Finance User & Role Management is restricted to institutional Finance Administrators."
+              reason="Role & Permission configuration is restricted to institutional Finance Administrators."
               onGoHome={() => handleTabChange('finance-dashboard')}
             />
           );
         }
-        return <UserManagementView />;
+        return <RolePermissionView />;
       case 'role-permissions':
       case 'access-matrix':
         if (!isAdmin) {

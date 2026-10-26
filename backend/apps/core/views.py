@@ -102,7 +102,6 @@ SYSTEM_MODULES = [
     {
         "category": "Administration & Security",
         "modules": [
-            {"id": "user-management", "name": "User Management", "description": "Manage institutional users, roles & credentials"},
             {"id": "role-permissions", "name": "Role & Permissions", "description": "Granular action matrix and security permissions"},
             {"id": "audit-logs", "name": "Audit Logs", "description": "Immutable security logs and transactional activity"},
         ]
@@ -140,7 +139,7 @@ DEFAULT_ROLE_ACCESS = {
     Roles.SUPER_ADMIN: ALL_MODULE_IDS,
     Roles.FINANCE_ADMIN: [
         "finance-dashboard", "fee-structures", "invoices-receipts", "scholarships",
-        "general-ledger", "financial-reports", "user-management", "role-permissions", "audit-logs"
+        "general-ledger", "financial-reports", "role-permissions", "audit-logs"
     ],
     Roles.FINANCE_USER: [
         "finance-dashboard", "fee-structures", "invoices-receipts"

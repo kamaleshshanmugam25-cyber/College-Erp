@@ -41,7 +41,6 @@ export function Sidebar({ activeTab, setActiveTab }) {
       title: 'Administration & Security',
       visible: isAdmin,
       items: [
-        { id: 'user-management', label: 'Finance Users & Roles', icon: Users, adminOnly: true },
         { id: 'role-permissions', label: 'Role & Permissions', icon: ShieldCheck, adminOnly: true },
         { id: 'audit-logs', label: 'Audit Logs', icon: Clock, adminOnly: true },
       ],
