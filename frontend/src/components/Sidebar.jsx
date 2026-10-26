@@ -19,7 +19,11 @@ import {
 
 export function Sidebar({ activeTab, setActiveTab }) {
   const { hasRole, canAccessModule } = useAuth();
+  const isSuper = hasRole('Super Admin');
   const isAdmin = hasRole('Super Admin', 'Finance Admin');
+  const isHR = isSuper || hasRole('HR Admin');
+  const isStudent = isSuper || hasRole('Student/Parent');
+  const isEmployee = isSuper || hasRole('Employee');
 
   const navSections = [
     {
@@ -35,6 +39,7 @@ export function Sidebar({ activeTab, setActiveTab }) {
     },
     {
       title: 'Administration & Security',
+      visible: isAdmin,
       items: [
         { id: 'user-management', label: 'Finance Users & Roles', icon: Users, adminOnly: true },
         { id: 'role-permissions', label: 'Role & Permissions', icon: ShieldCheck, adminOnly: true },
@@ -43,6 +48,7 @@ export function Sidebar({ activeTab, setActiveTab }) {
     },
     {
       title: 'HR & Payroll Management',
+      visible: isHR,
       items: [
         { id: 'employee-lifecycle', label: 'Employee Lifecycle', icon: Users },
         { id: 'attendance-leaves', label: 'Attendance & Leaves', icon: CalendarCheck2 },
@@ -52,6 +58,7 @@ export function Sidebar({ activeTab, setActiveTab }) {
     },
     {
       title: 'Student Management & Services',
+      visible: isStudent,
       items: [
         { id: 'student-portal', label: 'My Dues & Receipts', icon: Receipt },
         { id: 'student-scholarships', label: 'Scholarships & Concessions', icon: Award },
@@ -60,6 +67,7 @@ export function Sidebar({ activeTab, setActiveTab }) {
     },
     {
       title: 'Employee Self-Service',
+      visible: isEmployee,
       items: [
         { id: 'employee-details', label: 'Employee Details', icon: UserCheck },
         { id: 'employee-leaves', label: 'Apply Leave / My Attendance', icon: Calendar },
@@ -69,18 +77,21 @@ export function Sidebar({ activeTab, setActiveTab }) {
   ];
 
   // Dynamically filter sections and items according to declared access permissions
-  const visibleSections = navSections.map((section) => {
-    const allowedItems = section.items.filter((item) => {
-      if (item.adminOnly) return isAdmin;
-      return canAccessModule(item.id);
-    });
+  const visibleSections = navSections
+    .filter((section) => section.visible !== false)
+    .map((section) => {
+      const allowedItems = section.items.filter((item) => {
+        if (item.adminOnly) return isAdmin;
+        return canAccessModule(item.id);
+      });
 
-    return {
-      ...section,
-      items: allowedItems,
-      visible: allowedItems.length > 0,
-    };
-  }).filter((s) => s.visible);
+      return {
+        ...section,
+        items: allowedItems,
+        visible: allowedItems.length > 0,
+      };
+    })
+    .filter((s) => s.visible);
 
   return (
     <aside className="hidden md:flex w-64 bg-white border-r border-slate-200 flex-col shrink-0 h-full select-none justify-between">
