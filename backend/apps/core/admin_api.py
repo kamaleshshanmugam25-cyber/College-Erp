@@ -248,11 +248,18 @@ def users_list_api(request):
             user.groups.add(grp)
 
             # Create UserProfile
+            has_custom = bool(data.get("has_custom_permissions", False))
+            custom_mods = data.get("custom_modules", [])
+            from apps.core.views import ALL_MODULE_IDS
+            valid_mods = [m for m in custom_mods if m in ALL_MODULE_IDS] if (has_custom and isinstance(custom_mods, list)) else []
+
             UserProfile.objects.create(
                 user=user,
                 department=department or "Finance & Accounts",
                 staff_id=staff_id or None,
-                phone=phone
+                phone=phone,
+                has_custom_permissions=has_custom,
+                custom_modules=valid_mods
             )
 
             log_audit(

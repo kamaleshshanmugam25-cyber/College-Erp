@@ -89,9 +89,11 @@ export function UserManagementView() {
     email: '',
     staff_id: '',
     department: 'Finance & Accounts',
-    role: 'Accountant',
+    role: 'Finance User',
     password: '',
-    is_active: true
+    is_active: true,
+    has_custom_permissions: false,
+    custom_modules: ['fee-structures', 'invoices-receipts'],
   });
   const [createError, setCreateError] = useState('');
   const [submittingCreate, setSubmittingCreate] = useState(false);
@@ -186,9 +188,11 @@ export function UserManagementView() {
         email: '',
         staff_id: '',
         department: 'Finance & Accounts',
-        role: 'Accountant',
+        role: 'Finance User',
         password: '',
-        is_active: true
+        is_active: true,
+        has_custom_permissions: false,
+        custom_modules: ['fee-structures', 'invoices-receipts'],
       });
       loadUsers(1);
     } catch (err) {
@@ -741,6 +745,71 @@ export function UserManagementView() {
                     Use Default
                   </button>
                 </div>
+              </div>
+
+              {/* Custom Modular Permissions for New User */}
+              <div className="pt-2 border-t border-slate-100 space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
+                  <input
+                    type="checkbox"
+                    checked={createForm.has_custom_permissions}
+                    onChange={(e) => setCreateForm({ ...createForm, has_custom_permissions: e.target.checked })}
+                    className="rounded text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>Assign explicit custom module permissions now</span>
+                  <span className="text-[10px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200">Optional</span>
+                </label>
+
+                {createForm.has_custom_permissions && (
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-bold text-slate-700">Select Modules to Grant:</span>
+                      <div className="flex items-center gap-1.5 text-[10px]">
+                        <button
+                          type="button"
+                          onClick={() => setCreateForm({ ...createForm, custom_modules: ['fee-structures', 'invoices-receipts'] })}
+                          className="px-2 py-0.5 rounded bg-white border border-slate-200 font-bold text-blue-600 hover:bg-blue-50 cursor-pointer"
+                        >
+                          ⚡ Fees & Invoices
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCreateForm({ ...createForm, custom_modules: FINANCE_MODULES.map(m => m.id) })}
+                          className="px-2 py-0.5 rounded bg-white border border-slate-200 font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                        >
+                          All
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {FINANCE_MODULES.map((mod) => {
+                        const isChecked = createForm.custom_modules.includes(mod.id);
+                        return (
+                          <label
+                            key={mod.id}
+                            className={`p-2 rounded-lg border text-left cursor-pointer flex items-center gap-2 text-xs transition ${
+                              isChecked ? 'bg-white border-blue-500 font-bold text-slate-900 shadow-2xs' : 'bg-slate-100/60 border-slate-200 text-slate-500'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                const newMods = e.target.checked
+                                  ? [...createForm.custom_modules, mod.id]
+                                  : createForm.custom_modules.filter(m => m !== mod.id);
+                                setCreateForm({ ...createForm, custom_modules: newMods });
+                              }}
+                              className="rounded text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="truncate">{mod.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="pt-2 flex items-center justify-between border-t border-slate-100">
