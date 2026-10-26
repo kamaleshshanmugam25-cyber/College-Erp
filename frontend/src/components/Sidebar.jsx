@@ -39,10 +39,10 @@ export function Sidebar({ activeTab, setActiveTab }) {
     },
     {
       title: 'Administration & Security',
-      visible: isAdmin,
+      visible: isSuper,
       items: [
-        { id: 'role-permissions', label: 'Role & Permissions', icon: ShieldCheck, adminOnly: true },
-        { id: 'audit-logs', label: 'Audit Logs', icon: Clock, adminOnly: true },
+        { id: 'role-permissions', label: 'Role & Permissions', icon: ShieldCheck, superOnly: true },
+        { id: 'audit-logs', label: 'Audit Logs', icon: Clock, superOnly: true },
       ],
     },
     {
@@ -80,6 +80,7 @@ export function Sidebar({ activeTab, setActiveTab }) {
     .filter((section) => section.visible !== false)
     .map((section) => {
       const allowedItems = section.items.filter((item) => {
+        if (item.superOnly) return isSuper;
         if (item.adminOnly) return isAdmin;
         return canAccessModule(item.id);
       });

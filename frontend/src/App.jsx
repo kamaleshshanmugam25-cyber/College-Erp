@@ -152,34 +152,24 @@ function MainApp() {
         return <FinanceDashboard />;
       case 'user-management':
       case 'finance-users':
-        if (!isAdmin) {
-          return (
-            <AccessDeniedView
-              requiredRole="Finance Admin"
-              reason="Role & Permission configuration is restricted to institutional Finance Administrators."
-              onGoHome={() => handleTabChange('finance-dashboard')}
-            />
-          );
-        }
-        return <RolePermissionView />;
       case 'role-permissions':
       case 'access-matrix':
-        if (!isAdmin) {
+        if (!isSuper) {
           return (
             <AccessDeniedView
-              requiredRole="Finance Admin"
-              reason="Role & Permission configuration is restricted to institutional Finance Administrators."
+              requiredRole="Super Admin"
+              reason="Administration & Security configuration is restricted to Super Admin."
               onGoHome={() => handleTabChange('finance-dashboard')}
             />
           );
         }
         return <RolePermissionView />;
       case 'audit-logs':
-        if (!isAdmin) {
+        if (!isSuper) {
           return (
             <AccessDeniedView
-              requiredRole="Finance Admin"
-              reason="Security Audit Logs are restricted to institutional Finance Administrators."
+              requiredRole="Super Admin"
+              reason="Security Audit Logs are restricted to Super Admin."
               onGoHome={() => handleTabChange('finance-dashboard')}
             />
           );

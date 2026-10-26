@@ -139,7 +139,7 @@ DEFAULT_ROLE_ACCESS = {
     Roles.SUPER_ADMIN: ALL_MODULE_IDS,
     Roles.FINANCE_ADMIN: [
         "finance-dashboard", "fee-structures", "invoices-receipts", "scholarships",
-        "general-ledger", "financial-reports", "role-permissions", "audit-logs"
+        "general-ledger", "financial-reports"
     ],
     Roles.FINANCE_USER: [
         "finance-dashboard", "fee-structures", "invoices-receipts"
@@ -642,8 +642,8 @@ def access_matrix_api(request):
     """Retrieve or update module access declaration matrix (Super Admin & Finance Admin)."""
     if not request.user.is_authenticated:
         return JsonResponse({"error": "Authentication required"}, status=401)
-    if not (request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN, Roles.FINANCE_ADMIN)):
-        return JsonResponse({"error": "Forbidden: Finance Admin or Super Admin access required"}, status=403)
+    if not (request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)):
+        return JsonResponse({"error": "Forbidden: Super Admin access required"}, status=403)
 
     target_roles = [
         Roles.ACCOUNTANT,
