@@ -16,6 +16,8 @@ from django.views.generic import ListView, TemplateView
 from apps.core.pdf import render_pdf
 from apps.core.permissions import RoleRequiredMixin
 from apps.core.rbac import Roles, has_role
+from apps.core.audit import log_audit
+from apps.core.models import AuditLog
 from apps.ledger.models import EXPENSE_GROUPS, GeneralLedger
 from . import gateways
 from .forms import FeeCalculatorForm
@@ -145,8 +147,14 @@ class ReceiptPDFView(RoleRequiredMixin, View):
 
 @csrf_exempt
 def finance_dashboard_api(request):
-    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN):
-        return JsonResponse({"error": "Forbidden: Requires Finance Admin or Super Admin role"}, status=403)
+    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.ACCOUNTANT, Roles.FEE_MANAGER, Roles.VIEWER):
+        log_audit(
+            request=request,
+            action=AuditLog.Actions.ACCESS_DENIED,
+            resource=request.path,
+            details={"reason": "Access to Finance Dashboard denied"}
+        )
+        return JsonResponse({"error": "Forbidden: Requires authorized finance role"}, status=403)
 
     today = timezone.localdate()
     paid = Txn.objects.filter(status__in=PAID)
@@ -226,6 +234,7 @@ def finance_meta_api(request):
             "id": c.id,
             "code": c.code,
             "name": c.name,
+            "department": getattr(c, "department", "Computer Science") or "Computer Science",
             "annual_fee": float(c.annual_fee),
             "enrolled_count": enrolled_count,
             "allocated_count": allocated_count,
@@ -289,14 +298,32 @@ def finance_meta_api(request):
         "quotas": quotas,
         "students": students,
         "scholarships": scholarship_allocations,
+        "departments": [
+            {
+                "department": d,
+                "courses_count": Course.objects.filter(department=d).count(),
+                "enrolled_count": Student.objects.filter(course__department=d).count(),
+                "allocated_count": StudentFee.objects.filter(course__department=d, academic_year="2026-27", is_deleted=False).count(),
+                "current_allocated_fee": float(StudentFee.objects.filter(course__department=d, academic_year="2026-27", is_deleted=False).aggregate(t=Coalesce(Sum("total_amount"), ZERO))["t"]),
+                "suggested_fee": float(Course.objects.filter(department=d).first().annual_fee) if Course.objects.filter(department=d).exists() else 25000.0,
+                "courses": [{"id": c.id, "name": c.name, "code": c.code, "annual_fee": float(c.annual_fee)} for c in Course.objects.filter(department=d)]
+            }
+            for d in sorted(set(Course.objects.values_list("department", flat=True))) if d
+        ],
     })
 
 
 @csrf_exempt
 def create_quota_api(request):
     """Create a new scholarship / fee waiver category (e.g. Merit 25%, Sports 50%)."""
-    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN):
-        return JsonResponse({"error": "Forbidden: Requires Finance Admin or Super Admin role"}, status=403)
+    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.FEE_MANAGER):
+        log_audit(
+            request=request,
+            action=AuditLog.Actions.ACCESS_DENIED,
+            resource=request.path,
+            details={"reason": "Requires Finance Admin, Super Admin, or Fee Manager"}
+        )
+        return JsonResponse({"error": "Forbidden: Requires authorized finance role"}, status=403)
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
     try:
@@ -338,8 +365,14 @@ def create_quota_api(request):
 @csrf_exempt
 def create_course_api(request):
     """Create a new academic program / course and immediately make it available for fee allocation."""
-    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN):
-        return JsonResponse({"error": "Forbidden: Requires Finance Admin or Super Admin role"}, status=403)
+    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.FEE_MANAGER):
+        log_audit(
+            request=request,
+            action=AuditLog.Actions.ACCESS_DENIED,
+            resource=request.path,
+            details={"reason": "Requires Finance Admin, Super Admin, or Fee Manager"}
+        )
+        return JsonResponse({"error": "Forbidden: Requires authorized finance role"}, status=403)
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
     try:
@@ -350,6 +383,7 @@ def create_course_api(request):
     name = data.get("name", "").strip()
     code = data.get("code", "").strip().upper()
     annual_fee = data.get("annual_fee")
+    department = data.get("department", "").strip() or "Computer Science"
 
     if not name or not code or annual_fee is None:
         return JsonResponse({"error": "Course name, code, and annual fee are required."}, status=400)
@@ -364,13 +398,14 @@ def create_course_api(request):
     if Course.objects.filter(code=code).exists():
         return JsonResponse({"error": f"Course code '{code}' already exists."}, status=400)
 
-    course = Course.objects.create(name=name, code=code, annual_fee=fee_val)
+    course = Course.objects.create(name=name, code=code, department=department, annual_fee=fee_val)
     return JsonResponse({
         "success": True,
         "course": {
             "id": course.id,
             "code": course.code,
             "name": course.name,
+            "department": course.department,
             "annual_fee": float(course.annual_fee),
             "enrolled_count": 0,
             "allocated_count": 0,
@@ -381,8 +416,14 @@ def create_course_api(request):
 @csrf_exempt
 def allocate_fee_api(request):
     """Allocate fee schedule and installment milestones to an individual student or in batch to a course."""
-    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN):
-        return JsonResponse({"error": "Forbidden: Requires Finance Admin or Super Admin role"}, status=403)
+    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.FEE_MANAGER):
+        log_audit(
+            request=request,
+            action=AuditLog.Actions.ACCESS_DENIED,
+            resource=request.path,
+            details={"reason": "Requires Finance Admin, Super Admin, or Fee Manager"}
+        )
+        return JsonResponse({"error": "Forbidden: Requires authorized finance role"}, status=403)
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
     try:
@@ -645,3 +686,140 @@ def my_scholarships_api(request):
         "eligibility_policy": "Single Quota Policy (AICTE/UGC Non-Stacking Concession Rules Enforced)",
     })
 
+
+
+
+@csrf_exempt
+def allocate_department_fee_api(request):
+    """Enter fee amount and allocate to an individual department or across each department."""
+    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.FEE_MANAGER):
+        log_audit(
+            request=request,
+            action=AuditLog.Actions.ACCESS_DENIED,
+            resource=request.path,
+            details={"reason": "Requires Finance Admin, Super Admin, or Fee Manager"}
+        )
+        return JsonResponse({"error": "Forbidden: Requires authorized finance role"}, status=403)
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=405)
+    try:
+        data = json.loads(request.body.decode("utf-8")) if request.body else {}
+    except Exception:
+        data = request.POST
+
+    department = data.get("department", "").strip()
+    fee_amount = data.get("fee_amount")
+    quota_id = data.get("quota_id")
+    academic_year = data.get("academic_year", "2026-27")
+    installments = int(data.get("installments", 1))
+    first_due_str = data.get("first_due")
+    from datetime import date
+    first_due = date.fromisoformat(first_due_str) if first_due_str else timezone.localdate()
+
+    # Batch allocations across multiple departments at once
+    batch_allocations = data.get("batch_allocations")
+    if batch_allocations and isinstance(batch_allocations, list):
+        results = []
+        total_allocated_all = 0.0
+        total_students_all = 0
+        quota = QuotaCategory.objects.get(pk=quota_id) if quota_id else QuotaCategory.objects.first()
+
+        for item in batch_allocations:
+            dept_name = str(item.get("department", "")).strip()
+            dept_fee = item.get("fee_amount")
+            dept_inst = int(item.get("installments", installments))
+            if not dept_name or dept_fee is None:
+                continue
+
+            try:
+                dept_fee_val = Decimal(str(dept_fee))
+            except Exception:
+                continue
+
+            dept_courses = list(Course.objects.filter(department=dept_name))
+            for c in dept_courses:
+                c.annual_fee = dept_fee_val
+                c.save(update_fields=["annual_fee"])
+
+            dept_students = list(Student.objects.filter(course__in=dept_courses))
+            created = []
+            for s in dept_students:
+                StudentFee.objects.filter(student=s, academic_year=academic_year, is_deleted=False).update(is_deleted=True)
+                sf = create_student_fee(
+                    student=s,
+                    course=s.course,
+                    quota=quota,
+                    academic_year=academic_year,
+                    installments=dept_inst,
+                    first_due=first_due,
+                )
+                created.append(sf)
+
+            subtotal = sum(float(f.total_amount) for f in created)
+            total_allocated_all += subtotal
+            total_students_all += len(created)
+            results.append({
+                "department": dept_name,
+                "fee_entered": float(dept_fee_val),
+                "students_allocated": len(created),
+                "allocated_amount": subtotal,
+                "installments": dept_inst,
+            })
+
+        return JsonResponse({
+            "success": True,
+            "message": f"Successfully entered fees and allocated across {len(results)} departments ({total_students_all} students, ₹{total_allocated_all:,.2f})",
+            "results": results,
+            "total_allocated": total_allocated_all,
+            "total_students": total_students_all,
+        })
+
+    # Single department allocation
+    if not department:
+        return JsonResponse({"error": "Please select or enter an academic department."}, status=400)
+    if fee_amount is None:
+        return JsonResponse({"error": "Please enter the fee amount to allocate."}, status=400)
+
+    try:
+        fee_val = Decimal(str(fee_amount))
+        if fee_val <= 0:
+            return JsonResponse({"error": "Fee amount must be greater than zero."}, status=400)
+    except Exception:
+        return JsonResponse({"error": "Invalid fee amount format."}, status=400)
+
+    dept_courses = list(Course.objects.filter(department=department))
+    if not dept_courses:
+        code_slug = department[:4].upper()
+        dept_courses = [Course.objects.create(name=f"{department} Program", code=f"FS-2026-{code_slug}", department=department, annual_fee=fee_val)]
+    else:
+        for c in dept_courses:
+            c.annual_fee = fee_val
+            c.save(update_fields=["annual_fee"])
+
+    quota = get_object_or_404(QuotaCategory, pk=quota_id) if quota_id else QuotaCategory.objects.first()
+    dept_students = list(Student.objects.filter(course__in=dept_courses))
+
+    created_fees = []
+    for s in dept_students:
+        StudentFee.objects.filter(student=s, academic_year=academic_year, is_deleted=False).update(is_deleted=True)
+        sf = create_student_fee(
+            student=s,
+            course=s.course,
+            quota=quota,
+            academic_year=academic_year,
+            installments=installments,
+            first_due=first_due,
+        )
+        created_fees.append(sf)
+
+    total_allocated = sum(float(f.total_amount) for f in created_fees)
+    return JsonResponse({
+        "success": True,
+        "department": department,
+        "fee_entered": float(fee_val),
+        "allocated_count": len(created_fees),
+        "total_allocated": total_allocated,
+        "courses_count": len(dept_courses),
+        "installments": installments,
+        "message": f"Successfully set fee ₹{float(fee_val):,.2f} and allocated to Department of {department} ({len(created_fees)} student(s))!",
+    })

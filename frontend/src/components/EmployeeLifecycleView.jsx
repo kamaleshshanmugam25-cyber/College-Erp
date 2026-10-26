@@ -19,8 +19,11 @@ import {
   TrendingUp,
   Check,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  FileSpreadsheet
 } from 'lucide-react';
+import { StaffAttendanceSection } from './StaffAttendanceSection';
+import { BulkStaffOnboardingModal } from './BulkStaffOnboardingModal';
 
 export function EmployeeLifecycleView() {
   const [employees, setEmployees] = useState([]);
@@ -37,6 +40,7 @@ export function EmployeeLifecycleView() {
 
   // Modals state
   const [showOnboardModal, setShowOnboardModal] = useState(false);
+  const [showBulkOnboardModal, setShowBulkOnboardModal] = useState(false);
   const [profileModalEmp, setProfileModalEmp] = useState(null);
   const [manageModalEmp, setManageModalEmp] = useState(null);
   const [appraisalModalEmp, setAppraisalModalEmp] = useState(null);
@@ -264,7 +268,7 @@ export function EmployeeLifecycleView() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
             Faculty & Staff Directory & Appraisal Performance Engine
@@ -274,13 +278,23 @@ export function EmployeeLifecycleView() {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowOnboardModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Onboard New Staff Member</span>
-        </button>
+        <div className="flex flex-row items-center gap-2 sm:gap-3 shrink-0">
+          <button
+            onClick={() => setShowBulkOnboardModal(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer whitespace-nowrap"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>Bulk Upload Staff (Excel / CSV)</span>
+          </button>
+
+          <button
+            onClick={() => setShowOnboardModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4 shrink-0" />
+            <span>Onboard New Staff Member</span>
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -313,26 +327,40 @@ export function EmployeeLifecycleView() {
       </div>
 
       {/* Filters Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search staff name, ID, designation, or department..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
-            />
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+        <div className="p-4 sm:p-5 space-y-3 bg-slate-50/60">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-slate-400" />
+              Filter Staff Directory
+            </span>
+            {(search || selectedDept !== 'ALL' || selectedType !== 'ALL' || selectedStatus !== 'ALL') && (
+              <button
+                onClick={() => { setSearch(''); setSelectedDept('ALL'); setSelectedType('ALL'); setSelectedStatus('ALL'); }}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2.5 py-1 rounded-lg transition cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+                Reset
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Department selector */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
+            <div className="relative flex-1">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search staff name, ID, designation, or department..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
-              className="px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700 font-semibold focus:outline-hidden cursor-pointer"
+              className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-700 font-semibold focus:outline-none cursor-pointer"
             >
               <option value="ALL">All Departments</option>
               {stats?.departments?.map((d) => (
@@ -342,11 +370,10 @@ export function EmployeeLifecycleView() {
               ))}
             </select>
 
-            {/* Type selector */}
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="px-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700 font-semibold focus:outline-hidden cursor-pointer"
+              className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-700 font-semibold focus:outline-none cursor-pointer"
             >
               <option value="ALL">All Roles</option>
               <option value="TEACHING">Teaching Faculty</option>
@@ -354,34 +381,34 @@ export function EmployeeLifecycleView() {
               <option value="CONTRACT">Contractual / Adjunct</option>
             </select>
           </div>
-        </div>
 
-        {/* Lifecycle Status Tab Badges */}
-        <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100 overflow-x-auto text-xs">
-          {[
-            { id: 'ALL', label: 'All Staff', count: employees.length },
-            { id: 'PROBATION', label: 'On Probation', count: employees.filter(e => e.lifecycle_status === 'PROBATION').length },
-            { id: 'CONFIRMED', label: 'Confirmed', count: employees.filter(e => e.lifecycle_status === 'CONFIRMED').length },
-            { id: 'NOTICE_PERIOD', label: 'Notice Period', count: employees.filter(e => e.lifecycle_status === 'NOTICE_PERIOD').length },
-            { id: 'RELIEVED', label: 'Relieved', count: employees.filter(e => e.lifecycle_status === 'RELIEVED').length },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setSelectedStatus(tab.id)}
-              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                selectedStatus === tab.id
-                  ? 'bg-blue-600 text-white shadow-2xs'
-                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200'
-              }`}
-            >
-              <span>{tab.label}</span>
-              <span className={`px-1.5 py-0.2 rounded-md text-[10px] ${
-                selectedStatus === tab.id ? 'bg-blue-800 text-white' : 'bg-slate-200 text-slate-700'
-              }`}>
-                {tab.count}
-              </span>
-            </button>
-          ))}
+          {/* Lifecycle Status Chips */}
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { id: 'ALL', label: 'All Staff', count: employees.length },
+              { id: 'PROBATION', label: 'Probation', count: employees.filter(e => e.lifecycle_status === 'PROBATION').length },
+              { id: 'CONFIRMED', label: 'Confirmed', count: employees.filter(e => e.lifecycle_status === 'CONFIRMED').length },
+              { id: 'NOTICE_PERIOD', label: 'Notice Period', count: employees.filter(e => e.lifecycle_status === 'NOTICE_PERIOD').length },
+              { id: 'RELIEVED', label: 'Relieved', count: employees.filter(e => e.lifecycle_status === 'RELIEVED').length },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedStatus(tab.id)}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                  selectedStatus === tab.id
+                    ? 'bg-slate-800 text-white border-slate-800'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span className={`px-1.5 rounded text-[10px] font-bold ${
+                  selectedStatus === tab.id ? 'bg-slate-600 text-white' : 'bg-slate-100 text-slate-500'
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -476,6 +503,8 @@ export function EmployeeLifecycleView() {
         )}
       </div>
 
+      {/* Faculty & Staff Attendance Logs */}
+      <StaffAttendanceSection />
 
       {/* MODAL 1: PERFORM APPRAISAL & SALARY INCREMENT MODAL */}
       {appraisalModalEmp && (
@@ -817,6 +846,15 @@ export function EmployeeLifecycleView() {
           </div>
         </div>
       )}
+
+      {/* Bulk Staff Onboarding Modal (Excel / CSV) */}
+      <BulkStaffOnboardingModal
+        isOpen={showBulkOnboardModal}
+        onClose={() => setShowBulkOnboardModal(false)}
+        onSuccess={() => {
+          loadData();
+        }}
+      />
     </div>
   );
 }

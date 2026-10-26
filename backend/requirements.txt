@@ -4,5 +4,7 @@ celery[redis]>=5.4
 redis>=5.0
 psycopg[binary]>=3.1
 WeasyPrint>=62        # needs pango/cairo system libs; or swap core/pdf.py for reportlab
+reportlab>=5.0
+openpyxl>=3.1
 gunicorn>=22
 django-cors-headers>=4.3.0

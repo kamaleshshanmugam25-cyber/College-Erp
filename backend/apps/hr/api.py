@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import mixins, serializers, viewsets
@@ -8,7 +9,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from apps.core.permissions import RoleActionPermission
-from apps.core.rbac import Roles
+from apps.core.rbac import Roles, has_role
 from .models import Attendance, Employee, EmployeeAppraisal, Holiday, LeaveApplication, Payroll
 from .tasks import run_payroll
 
@@ -274,6 +275,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         "transition_status": (Roles.HR_ADMIN,),
         "appraise": (Roles.HR_ADMIN, Roles.SUPER_ADMIN),
         "appraisals": (Roles.HR_ADMIN, Roles.SUPER_ADMIN, Roles.EMPLOYEE),
+        "bulk_upload": (Roles.HR_ADMIN, Roles.SUPER_ADMIN),
     }
 
     def get_permissions(self):
@@ -499,6 +501,161 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             qs = qs.filter(employee=emp_profile)
 
         return Response(EmployeeAppraisalSerializer(qs, many=True).data)
+
+    @action(detail=False, methods=["post"], url_path="bulk-upload")
+    def bulk_upload(self, request):
+        """Bulk onboards multiple staff members via JSON or uploaded Excel (.xlsx, .xls) / CSV."""
+        if not (request.user.is_superuser or request.user.is_staff or has_role(request.user, Roles.HR_ADMIN, Roles.SUPER_ADMIN)):
+            return Response({"error": "Forbidden: HR Admin or Super Admin permission required"}, status=403)
+
+        employees_data = []
+
+        if "file" in request.FILES:
+            uploaded_file = request.FILES["file"]
+            fname = uploaded_file.name.lower()
+            if fname.endswith(".csv"):
+                import csv, io
+                content = uploaded_file.read().decode("utf-8-sig", errors="ignore")
+                reader = csv.DictReader(io.StringIO(content))
+                for row in reader:
+                    employees_data.append(row)
+            elif fname.endswith((".xlsx", ".xls")):
+                import openpyxl, io
+                wb = openpyxl.load_workbook(io.BytesIO(uploaded_file.read()), data_only=True)
+                sheet = wb.active
+                rows = list(sheet.iter_rows(values_only=True))
+                if rows:
+                    headers = [str(h).strip().lower().replace(" ", "_") if h is not None else f"col_{idx}" for idx, h in enumerate(rows[0])]
+                    for row_values in rows[1:]:
+                        if not any(row_values):
+                            continue
+                        row_dict = {}
+                        for h, val in zip(headers, row_values):
+                            row_dict[h] = str(val).strip() if val is not None else ""
+                        employees_data.append(row_dict)
+        else:
+            employees_data = request.data.get("employees", [])
+
+        if not employees_data or not isinstance(employees_data, list):
+            return Response({"error": "No employee records found to process."}, status=400)
+
+        created_employees = []
+        skipped_records = []
+        errors = []
+
+        with transaction.atomic():
+            for idx, raw_row in enumerate(employees_data, start=1):
+                row = {str(k).strip().lower().replace(" ", "_"): v for k, v in raw_row.items()}
+
+                # Extract 3 to 5 core fields
+                staff_id = (row.get("staff_id") or row.get("emp_id") or row.get("employee_id") or row.get("id") or "").strip()
+                name = (row.get("name") or row.get("employee_name") or row.get("staff_name") or row.get("full_name") or "").strip()
+                department = (row.get("department") or row.get("dept") or "Computer Science").strip()
+                designation = (row.get("designation") or row.get("role") or row.get("title") or "Assistant Professor").strip()
+                email = (row.get("email") or row.get("mail") or row.get("email_address") or "").strip().lower()
+
+                if not name:
+                    errors.append(f"Row #{idx}: Employee name is missing.")
+                    continue
+
+                # Auto-generate staff_id if not supplied
+                if not staff_id:
+                    prefix = "FAC"
+                    num = Employee.all_objects.filter(staff_id__startswith=prefix).count() + 1 + len(created_employees)
+                    staff_id = f"{prefix}{num:03d}"
+                    while Employee.all_objects.filter(staff_id=staff_id).exists():
+                        num += 1
+                        staff_id = f"{prefix}{num:03d}"
+                elif Employee.all_objects.filter(staff_id=staff_id).exists():
+                    skipped_records.append({
+                        "staff_id": staff_id,
+                        "name": name,
+                        "reason": f"Staff ID '{staff_id}' already exists in registry."
+                    })
+                    continue
+
+                # Username generation
+                base_username = (email.split("@")[0] if email else name.lower().replace(" ", "_")).replace(".", "_")
+                base_username = "".join(c for c in base_username if c.isalnum() or c == "_")
+                if not base_username:
+                    base_username = f"emp_{staff_id.lower()}"
+                username = base_username
+                suffix = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}_{suffix}"
+                    suffix += 1
+
+                parts = name.split(maxsplit=1)
+                first_name = parts[0] if parts else username
+                last_name = parts[1] if len(parts) > 1 else ""
+
+                user = User.objects.create_user(
+                    username=username,
+                    email=email or f"{username}@apex.edu",
+                    first_name=first_name,
+                    last_name=last_name,
+                    password="password123",
+                )
+                emp_group, _ = Group.objects.get_or_create(name=Roles.EMPLOYEE)
+                user.groups.add(emp_group)
+
+                # Salary parsing
+                try:
+                    basic_salary = float(row.get("basic_salary") or row.get("salary") or 35000)
+                except (ValueError, TypeError):
+                    basic_salary = 35000.0
+
+                try:
+                    hra = float(row.get("hra") or 10000)
+                except (ValueError, TypeError):
+                    hra = 10000.0
+
+                try:
+                    allowances = float(row.get("allowances") or 3000)
+                except (ValueError, TypeError):
+                    allowances = 3000.0
+
+                employee_type = Employee.Type.TEACHING
+                raw_type = str(row.get("employee_type") or row.get("type") or "").upper()
+                if "NON" in raw_type or "STAFF" in raw_type:
+                    employee_type = Employee.Type.NON_TEACHING
+
+                emp = Employee.objects.create(
+                    user=user,
+                    staff_id=staff_id,
+                    department=department,
+                    designation=designation,
+                    employee_type=employee_type,
+                    lifecycle_status=Employee.LifecycleStatus.CONFIRMED,
+                    joining_date=timezone.localdate(),
+                    basic_salary=basic_salary,
+                    hra=hra,
+                    allowances=allowances,
+                    pf_applicable=True,
+                    bank_name=row.get("bank_name") or "State Bank of India",
+                    account_number=row.get("account_number") or "",
+                    ifsc=row.get("ifsc") or "SBIN0001234",
+                )
+
+                created_employees.append({
+                    "id": emp.id,
+                    "staff_id": emp.staff_id,
+                    "name": emp.user.get_full_name() or emp.user.username,
+                    "department": emp.department,
+                    "designation": emp.designation,
+                    "email": emp.user.email,
+                    "gross_salary": float(emp.basic_salary + emp.hra + emp.allowances),
+                })
+
+        return Response({
+            "success": True,
+            "created_count": len(created_employees),
+            "skipped_count": len(skipped_records),
+            "created": created_employees,
+            "skipped": skipped_records,
+            "errors": errors,
+            "message": f"Successfully onboarded {len(created_employees)} staff member(s)."
+        })
 
 
 

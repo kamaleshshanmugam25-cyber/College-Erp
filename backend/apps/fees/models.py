@@ -31,6 +31,7 @@ class Student(BaseModel):
 class Course(BaseModel):
     code = models.CharField(max_length=20, unique=True)
     name = models.CharField(max_length=150)
+    department = models.CharField(max_length=100, default="Computer Science", blank=True)
     annual_fee = Money()
 
     def __str__(self):

@@ -10,7 +10,8 @@ import {
   Scale,
   Calendar,
   TrendingUp,
-  Calculator
+  Calculator,
+  UserCheck
 } from 'lucide-react';
 
 export function MobileBottomNav({ activeTab, setActiveTab }) {
@@ -55,9 +56,9 @@ export function MobileBottomNav({ activeTab, setActiveTab }) {
     ];
   } else if (isEmployee) {
     navItems = [
-      { id: 'employee-leaves', label: 'Clock In', icon: CalendarCheck2 },
-      { id: 'employee-appraisal', label: 'Appraisals', icon: Award },
-      { id: 'holidays', label: 'Holidays', icon: Calendar },
+      { id: 'employee-details', label: 'Details', icon: UserCheck },
+      { id: 'employee-leaves', label: 'Leaves', icon: CalendarCheck2 },
+      { id: 'employee-appraisal', label: 'Appraisal', icon: Award },
     ];
   } else {
     navItems = [

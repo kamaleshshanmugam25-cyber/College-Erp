@@ -16,8 +16,9 @@ function getCookie(name) {
 
 export async function apiRequest(endpoint, options = {}) {
   const csrfToken = getCookie('csrftoken');
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
     ...(options.headers || {}),
   };
@@ -59,6 +60,11 @@ export const api = {
   logout: () => apiRequest('/api/auth/logout/', {
     method: 'POST',
   }),
+  getAccessMatrix: () => apiRequest('/api/core/access-matrix/'),
+  updateAccessMatrix: (payload) => apiRequest('/api/core/access-matrix/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
 
   // Finance API
   getFinanceDashboard: () => apiRequest('/api/finance/dashboard/'),
@@ -76,6 +82,10 @@ export const api = {
     body: JSON.stringify(params),
   }),
   allocateFee: (payload) => apiRequest('/api/fees/allocate/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+  allocateDepartmentFee: (payload) => apiRequest('/api/finance/department-fee-allocate/', {
     method: 'POST',
     body: JSON.stringify(payload),
   }),
@@ -141,6 +151,18 @@ export const api = {
     body: JSON.stringify(payload),
   }),
   getAppraisals: () => apiRequest('/api/hr/employees/appraisals/'),
+  bulkUploadEmployees: (payload) => {
+    if (typeof FormData !== 'undefined' && payload instanceof FormData) {
+      return apiRequest('/api/hr/employees/bulk-upload/', {
+        method: 'POST',
+        body: payload,
+      });
+    }
+    return apiRequest('/api/hr/employees/bulk-upload/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
 
   // Holidays API
   getHolidays: () => apiRequest('/api/holidays/'),
@@ -167,6 +189,45 @@ export const api = {
   getMyScholarships: () => apiRequest('/api/portal/my-scholarships/'),
   getStatutoryCompliance: () => apiRequest('/api/hr/statutory-compliance/'),
   getSystemInfo: () => apiRequest('/api/system/info/'),
+
+  // Admin User Management & RBAC APIs
+  getAdminUsers: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiRequest(`/api/admin/users/${query ? `?${query}` : ''}`);
+  },
+  createAdminUser: (data) => apiRequest('/api/admin/users/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  getAdminUserDetail: (id) => apiRequest(`/api/admin/users/${id}/`),
+  updateAdminUser: (id, data) => apiRequest(`/api/admin/users/${id}/`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  }),
+  deleteAdminUser: (id) => apiRequest(`/api/admin/users/${id}/`, {
+    method: 'DELETE',
+  }),
+  resetAdminUserPassword: (id, new_password) => apiRequest(`/api/admin/users/${id}/reset-password/`, {
+    method: 'POST',
+    body: JSON.stringify({ new_password }),
+  }),
+
+  // Granular Role & Permission Matrix APIs
+  getAdminPermissions: () => apiRequest('/api/admin/permissions/'),
+  updateAdminPermission: (payload) => apiRequest('/api/admin/permissions/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+  resetAdminPermissions: () => apiRequest('/api/admin/permissions/', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'reset' }),
+  }),
+
+  // Audit Logs API
+  getAdminAuditLogs: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiRequest(`/api/admin/audit-logs/${query ? `?${query}` : ''}`);
+  },
 };
 
 

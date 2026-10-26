@@ -12,8 +12,11 @@ import {
   Plus,
   BookOpen,
   X,
-  ArrowRight
+  ArrowRight,
+  Building2,
+  Coins
 } from 'lucide-react';
+import { DepartmentFeeAllocationSection } from '../components/DepartmentFeeAllocationSection';
 
 export function FeeCalculator() {
   const [courses, setCourses] = useState([]);
@@ -36,7 +39,10 @@ export function FeeCalculator() {
   // New Course Modal State
   const [showAddCourse, setShowAddCourse] = useState(false);
   const [newCourseName, setNewCourseName] = useState('');
+  const [departments, setDepartments] = useState([]);
+  const [showDeptAllocation, setShowDeptAllocation] = useState(false);
   const [newCourseCode, setNewCourseCode] = useState('');
+  const [newCourseDept, setNewCourseDept] = useState('Computer Science');
   const [newCourseFee, setNewCourseFee] = useState('');
   const [creatingCourse, setCreatingCourse] = useState(false);
 
@@ -46,6 +52,7 @@ export function FeeCalculator() {
       setCourses(meta.courses || []);
       setQuotas(meta.quotas || []);
       setStudents(meta.students || []);
+      setDepartments(meta.departments || []);
       // Keep both selectedCourse and selectedQuota blank so placeholders show on load
     } catch (err) {
       setError('Failed to load courses, quotas, or students.');
@@ -159,9 +166,10 @@ export function FeeCalculator() {
       const res = await api.createCourse({
         name: newCourseName.trim(),
         code: newCourseCode.trim(),
+        department: newCourseDept.trim() || 'Computer Science',
         annual_fee: Number(newCourseFee),
       });
-      setAllocationSuccess(`Course "${res.course.name} (${res.course.code})" created successfully!`);
+      setAllocationSuccess(`Course "${res.course.name} (${res.course.code})" created under Department of ${res.course.department || newCourseDept} successfully!`);
       setNewCourseName('');
       setNewCourseCode('');
       setNewCourseFee('');
@@ -200,15 +208,41 @@ export function FeeCalculator() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowAddCourse(!showAddCourse)}
-          className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0 cursor-pointer"
-        >
-          {showAddCourse ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-          <span>{showAddCourse ? 'Close Form' : 'Add Academic Course'}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Near Add Academic Course: Professional Allocate Department Fee Button */}
+          <button
+            type="button"
+            onClick={() => setShowDeptAllocation(!showDeptAllocation)}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0 cursor-pointer"
+          >
+            <Building2 className="w-4 h-4" />
+            <span>{showDeptAllocation ? 'Close Department Fee' : '+ Allocate Department Fee'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowAddCourse(!showAddCourse)}
+            className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0 cursor-pointer"
+          >
+            {showAddCourse ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            <span>{showAddCourse ? 'Close Form' : 'Add Academic Course'}</span>
+          </button>
+        </div>
       </div>
+
+      {/* Enter Fee & Allocate to Each Department Panel */}
+      {showDeptAllocation && (
+        <DepartmentFeeAllocationSection
+          departments={departments}
+          quotas={quotas}
+          academicYear={academicYear}
+          onClose={() => setShowDeptAllocation(false)}
+          onSuccess={() => {
+            loadMeta();
+            if (selectedCourse && selectedQuota) handleCalculate();
+          }}
+        />
+      )}
 
       {/* Add Course Form Panel */}
       {showAddCourse && (
@@ -228,7 +262,7 @@ export function FeeCalculator() {
           </div>
 
           <form onSubmit={handleCreateCourse} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Course Name</label>
                 <input
@@ -251,6 +285,23 @@ export function FeeCalculator() {
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Academic Department</label>
+                <select
+                  value={newCourseDept}
+                  onChange={(e) => setNewCourseDept(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                >
+                  <option value="Computer Science">Computer Science</option>
+                  <option value="Computer Applications">Computer Applications</option>
+                  <option value="Commerce">Commerce</option>
+                  <option value="Life Sciences">Life Sciences</option>
+                  <option value="Management Studies">Management Studies</option>
+                  <option value="Mechanical Engineering">Mechanical Engineering</option>
+                  <option value="Electrical & Electronics">Electrical & Electronics</option>
+                </select>
               </div>
 
               <div>
@@ -622,6 +673,7 @@ export function FeeCalculator() {
             <thead className="bg-slate-50 text-slate-600 font-semibold text-[11px]">
               <tr>
                 <th className="py-2.5 px-4">Course Program</th>
+                <th className="py-2.5 px-4">Department</th>
                 <th className="py-2.5 px-4">Course Code</th>
                 <th className="py-2.5 px-4 text-right">Annual Base Fee</th>
                 <th className="py-2.5 px-4 text-center">Enrolled Students</th>
@@ -640,6 +692,12 @@ export function FeeCalculator() {
                   >
                     <td className="py-3 px-4 font-bold text-slate-900">
                       {c.name}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                        <Building2 className="w-3 h-3 text-indigo-600" />
+                        <span>{c.department || 'General'}</span>
+                      </span>
                     </td>
                     <td className="py-3 px-4 text-slate-500 font-mono">
                       {c.code}

@@ -25,6 +25,8 @@ import { ScholarshipsView } from '../components/ScholarshipsView';
 import { HolidaysView } from '../components/HolidaysView';
 import { LedgerView } from '../components/LedgerView';
 import { MyAppraisalsView } from '../components/MyAppraisalsView';
+import { EmployeeDetailsView } from '../components/EmployeeDetailsView';
+import { RoleAccessMatrixView } from '../components/RoleAccessMatrixView';
 
 
 
@@ -249,6 +251,13 @@ export function ModuleView({ moduleId }) {
       );
 
 
+
+    case 'role-permissions':
+    case 'access-matrix':
+      return <RoleAccessMatrixView />;
+
+    case 'employee-details':
+      return <EmployeeDetailsView />;
 
     case 'employee-lifecycle':
       return <EmployeeLifecycleView />;

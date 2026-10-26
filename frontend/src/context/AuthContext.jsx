@@ -70,11 +70,29 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const switchRole = async (roleName) => {
+    const res = await api.login({ demo_role: roleName });
+    if (res?.success && res.user) {
+      setUser(res.user);
+      return res.user;
+    }
+    return null;
+  };
+
   const hasRole = (...roles) => {
     if (!user) return false;
     if (user.is_superuser || (user.roles && user.roles.includes('Super Admin'))) return true;
     if (!user.roles) return false;
     return roles.some((r) => user.roles.includes(r));
+  };
+
+  const canAccessModule = (moduleId) => {
+    if (!user) return false;
+    if (user.is_superuser || (user.roles && user.roles.includes('Super Admin'))) return true;
+    if (user.accessible_modules && Array.isArray(user.accessible_modules)) {
+      return user.accessible_modules.includes(moduleId);
+    }
+    return true;
   };
 
   return (
@@ -87,7 +105,9 @@ export function AuthProvider({ children }) {
         register,
         forgotPassword,
         logout,
+        switchRole,
         hasRole,
+        canAccessModule,
         checkAuth,
       }}
     >

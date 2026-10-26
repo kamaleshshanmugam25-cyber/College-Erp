@@ -80,3 +80,90 @@ class NumberSequence(models.Model):
             seq.last_value += 1
             seq.save(update_fields=["last_value"])
             return seq.last_value
+
+
+class RoleModuleAccess(models.Model):
+    """Stores which modules are declared accessible for each role by Super Admin."""
+    role = models.CharField(max_length=64, db_index=True)
+    module_id = models.CharField(max_length=64, db_index=True)
+    is_granted = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("role", "module_id")
+
+    def __str__(self):
+        return f"{self.role} -> {self.module_id} ({'Granted' if self.is_granted else 'Revoked'})"
+
+
+class UserProfile(models.Model):
+    """Extended departmental & institutional profile for users."""
+    user = models.OneToOneField("auth.User", on_delete=models.CASCADE, related_name="erp_profile")
+    department = models.CharField(max_length=128, default="Finance & Accounts", blank=True)
+    staff_id = models.CharField(max_length=64, blank=True, null=True, db_index=True)
+    phone = models.CharField(max_length=32, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.department} ({self.staff_id or 'No ID'})"
+
+
+class RolePermission(models.Model):
+    """Granular action-level permissions per module for each role."""
+    role = models.CharField(max_length=64, db_index=True)
+    module_id = models.CharField(max_length=64, db_index=True)
+    can_view = models.BooleanField(default=True)
+    can_create = models.BooleanField(default=False)
+    can_edit = models.BooleanField(default=False)
+    can_delete = models.BooleanField(default=False)
+    can_approve = models.BooleanField(default=False)
+    can_export = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("role", "module_id")
+
+    def __str__(self):
+        return f"{self.role} -> {self.module_id} (V:{self.can_view} C:{self.can_create} E:{self.can_edit} D:{self.can_delete} A:{self.can_approve} X:{self.can_export})"
+
+
+class AuditLog(models.Model):
+    """Immutable audit trail for all user operations, role changes, and security events."""
+    class Actions:
+        USER_LOGIN = "USER_LOGIN"
+        USER_LOGOUT = "USER_LOGOUT"
+        LOGIN_FAILED = "LOGIN_FAILED"
+        USER_CREATED = "USER_CREATED"
+        USER_UPDATED = "USER_UPDATED"
+        USER_ACTIVATED = "USER_ACTIVATED"
+        USER_DEACTIVATED = "USER_DEACTIVATED"
+        PASSWORD_RESET = "PASSWORD_RESET"
+        ROLE_ASSIGNED = "ROLE_ASSIGNED"
+        ROLE_CHANGED = "ROLE_CHANGED"
+        PERMISSION_CHANGED = "PERMISSION_CHANGED"
+        FEE_ALLOCATED = "FEE_ALLOCATED"
+        INVOICE_GENERATED = "INVOICE_GENERATED"
+        PAYMENT_RECORDED = "PAYMENT_RECORDED"
+        VOUCHER_POSTED = "VOUCHER_POSTED"
+        ACCESS_DENIED = "ACCESS_DENIED"
+
+    actor = models.ForeignKey("auth.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="audit_logs")
+    actor_username = models.CharField(max_length=150, default="System", db_index=True)
+    actor_role = models.CharField(max_length=64, default="System")
+    action = models.CharField(max_length=64, db_index=True)
+    resource = models.CharField(max_length=128, db_index=True)
+    resource_id = models.CharField(max_length=64, blank=True, null=True)
+    details = models.JSONField(default=dict, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=256, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"[{self.created_at.strftime('%Y-%m-%d %H:%M')}] {self.actor_username} ({self.actor_role}) -> {self.action} on {self.resource}"
+
+

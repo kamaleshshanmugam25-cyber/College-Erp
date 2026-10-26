@@ -12,6 +12,12 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  Filter,
+  RefreshCw,
+  Clock,
+  XCircle,
+  CalendarDays,
+  SunMedium,
 } from 'lucide-react';
 
 export function EmployeePortal() {
@@ -20,10 +26,14 @@ export function EmployeePortal() {
   const [attendanceSummary, setAttendanceSummary] = useState(null);
   const [clockActionMsg, setClockActionMsg] = useState(null);
   const [clocking, setClocking] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState('ALL');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAllAttendance, setShowAllAttendance] = useState(false);
+
+  // Attendance Filters
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+  const [filterStatus, setFilterStatus] = useState('ALL');
 
   // Leave Modal state
   const [leaveModal, setLeaveModal] = useState(false);
@@ -114,15 +124,33 @@ export function EmployeePortal() {
     }
   };
 
-  const daysPresent = attendanceSummary?.present ?? attendance.filter(a => a.status === 'PRESENT').length;
-  const onDutyDays = attendanceSummary?.on_duty ?? attendance.filter(a => a.status === 'ON_DUTY').length;
-
-  const filteredAttendance = attendance.filter((a) => {
-    if (selectedMonth === 'ALL') return true;
-    return a.date?.startsWith(`2026-${selectedMonth}`);
+  const normalizedAttendance = attendance.map((a) => {
+    let st = a.status;
+    if (st === 'ON_DUTY' || st === 'HOLIDAY') st = 'HALF_DAY';
+    return { ...a, status: st };
   });
 
-  const displayedAttendance = showAllAttendance ? filteredAttendance : filteredAttendance.slice(0, 4);
+  const daysPresent = attendanceSummary?.present ?? normalizedAttendance.filter(a => a.status === 'PRESENT').length;
+  const daysHalfDay = attendanceSummary?.half_day ?? normalizedAttendance.filter(a => a.status === 'HALF_DAY').length;
+  const daysAbsent = normalizedAttendance.filter(a => a.status === 'ABSENT').length;
+
+  const filteredAttendance = normalizedAttendance.filter((a) => {
+    const matchStatus = filterStatus === 'ALL' || a.status === filterStatus;
+    const matchStart = !filterStartDate || a.date >= filterStartDate;
+    const matchEnd = !filterEndDate || a.date <= filterEndDate;
+    return matchStatus && matchStart && matchEnd;
+  });
+
+  const resetFilters = () => {
+    setFilterStartDate('');
+    setFilterEndDate('');
+    setFilterStatus('ALL');
+    setShowAllAttendance(false);
+  };
+
+  const hasActiveFilter = filterStatus !== 'ALL' || filterStartDate || filterEndDate;
+
+  const displayedAttendance = showAllAttendance ? filteredAttendance : filteredAttendance.slice(0, 6);
 
   if (loading && payslips.length === 0) {
     return (
@@ -222,17 +250,16 @@ export function EmployeePortal() {
       </div>
 
       {/* Attendance & Biometric Section */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+        {/* Header */}
+        <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <CalendarCheck2 className="w-4 h-4 text-indigo-600" />
-              <span>Attendance & Web Clock-In</span>
+              <span>Biometric Attendance & Web Clock-In</span>
             </h2>
-            <p className="text-xs text-slate-500">Daily punch logs and monthly attendance summary</p>
+            <p className="text-xs text-slate-500">Daily biometric punch logs and attendance history</p>
           </div>
-
-          {/* Quick Clock-In / Clock-Out Actions */}
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handleClockIn}
@@ -254,139 +281,222 @@ export function EmployeePortal() {
         </div>
 
         {clockActionMsg && (
-          <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2">
+          <div className="mx-4 sm:mx-5 mt-3 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{clockActionMsg}</span>
           </div>
         )}
 
-        {/* Attendance Summary Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-0.5">
-            <div className="text-[10px] font-bold uppercase text-slate-400">Attendance Rate</div>
-            <div className="text-lg font-black text-emerald-700">
-              {attendanceSummary?.attendance_rate || 100}%
-            </div>
+        {/* Summary Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border-b border-slate-100">
+          <div className="p-3 sm:p-4 border-r border-slate-100 space-y-0.5">
+            <div className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-400">Attendance Rate</div>
+            <div className="text-base sm:text-lg font-black text-emerald-700">{attendanceSummary?.attendance_rate || 100}%</div>
+            <div className="text-[10px] text-slate-400">Current monthly cycle</div>
           </div>
-
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-0.5">
-            <div className="text-[10px] font-bold uppercase text-slate-400">Days Present</div>
-            <div className="text-lg font-black text-slate-900">
-              {daysPresent} {daysPresent === 1 ? 'Day' : 'Days'}
-            </div>
+          <div className="p-3 sm:p-4 sm:border-r border-slate-100 space-y-0.5">
+            <div className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-400">Days Present</div>
+            <div className="text-base sm:text-lg font-black text-slate-900">{daysPresent} Days</div>
+            <div className="text-[10px] text-slate-400">Verified biometric punches</div>
           </div>
-
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-0.5">
-            <div className="text-[10px] font-bold uppercase text-slate-400">On-Duty</div>
-            <div className="text-lg font-black text-blue-700">
-              {onDutyDays} {onDutyDays === 1 ? 'Day' : 'Days'}
-            </div>
+          <div className="p-3 sm:p-4 border-r border-t sm:border-t-0 border-slate-100 space-y-0.5">
+            <div className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-400">Half-Day / Absent</div>
+            <div className="text-base sm:text-lg font-black text-amber-600">{daysHalfDay} <span className="text-xs text-slate-500 font-semibold">Half</span> · <span className="text-rose-600">{daysAbsent}</span> <span className="text-xs text-slate-500 font-semibold">Abs</span></div>
+            <div className="text-[10px] text-slate-400">Leaves & partial shifts</div>
           </div>
-
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-0.5">
-            <div className="text-[10px] font-bold uppercase text-slate-400">Today</div>
+          <div className="p-3 sm:p-4 border-t sm:border-t-0 space-y-0.5">
+            <div className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-400">Today's Status</div>
             <div className="text-xs font-bold text-slate-900 pt-0.5">
               {attendanceSummary?.today ? (
-                <span className="inline-flex items-center gap-1 text-emerald-700 font-bold">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>In ({attendanceSummary.today.check_in?.slice(0, 5)})</span>
+                <span className="inline-flex items-center gap-1 text-emerald-700 font-bold text-[11px]">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>Clocked In ({attendanceSummary.today.check_in?.slice(0, 5)})</span>
                 </span>
               ) : (
-                <span className="text-slate-500 font-medium">Not Clocked In</span>
+                <span className="text-slate-500 font-semibold text-[11px]">Not Clocked In Today</span>
               )}
             </div>
+            <div className="text-[10px] text-slate-400">Shift: 09:00 AM – 05:00 PM</div>
           </div>
         </div>
 
-        {/* Filter bar */}
-        <div className="flex items-center justify-between text-xs pt-1">
-          <div className="font-bold text-slate-800">
-            Punch History ({filteredAttendance.length} {filteredAttendance.length === 1 ? 'Record' : 'Records'})
-          </div>
-          <div className="flex items-center gap-1.5">
-            {['ALL', '10', '09'].map((m) => (
+        {/* ── DATE RANGE + STATUS FILTERS ── */}
+        <div className="p-4 sm:p-5 space-y-3 border-b border-slate-100 bg-slate-50/60">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-slate-400" />
+              Filter Attendance Records
+            </span>
+            {hasActiveFilter && (
               <button
-                key={m}
-                onClick={() => setSelectedMonth(m)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
-                  selectedMonth === m
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-                }`}
+                onClick={resetFilters}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2.5 py-1 rounded-lg transition cursor-pointer"
               >
-                {m === 'ALL' ? 'All Months' : m === '10' ? 'October 2026' : 'September 2026'}
+                <RefreshCw className="w-3 h-3" />
+                Reset Filters
+              </button>
+            )}
+          </div>
+
+          {/* Date Range Row */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Start Date</label>
+              <input
+                type="date"
+                value={filterStartDate}
+                onChange={(e) => { setFilterStartDate(e.target.value); setShowAllAttendance(false); }}
+                className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">End Date</label>
+              <input
+                type="date"
+                value={filterEndDate}
+                onChange={(e) => { setFilterEndDate(e.target.value); setShowAllAttendance(false); }}
+                className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Status Filter Chips */}
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { key: 'ALL',      label: 'All',      color: filterStatus === 'ALL'      ? 'bg-slate-800 text-white border-slate-800'     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100' },
+              { key: 'PRESENT',  label: 'Present',  color: filterStatus === 'PRESENT'  ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' },
+              { key: 'ABSENT',   label: 'Absent',   color: filterStatus === 'ABSENT'   ? 'bg-rose-600 text-white border-rose-600'       : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' },
+              { key: 'HALF_DAY', label: 'Half-Day', color: filterStatus === 'HALF_DAY' ? 'bg-amber-500 text-white border-amber-500'     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' },
+            ].map(({ key, label, color }) => (
+              <button
+                key={key}
+                onClick={() => { setFilterStatus(key); setShowAllAttendance(false); }}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition cursor-pointer ${color}`}
+              >
+                {label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Attendance Records Table */}
-        {filteredAttendance.length > 0 ? (
-          <div>
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-600 font-semibold text-[11px] border-b border-slate-200">
-                  <tr>
-                    <th className="py-2.5 px-4">Date</th>
-                    <th className="py-2.5 px-4">Check-In</th>
-                    <th className="py-2.5 px-4">Check-Out</th>
-                    <th className="py-2.5 px-4 text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-medium">
-                  {displayedAttendance.map((a) => (
+        {/* Punch History Header */}
+        <div className="px-4 sm:px-5 pt-3.5 pb-2 flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-800">
+            Attendance Punch History ({filteredAttendance.length} {filteredAttendance.length === 1 ? 'Record' : 'Records'})
+          </span>
+          {hasActiveFilter && (
+            <span className="text-[10px] text-blue-600 font-semibold bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+              Filtered View
+            </span>
+          )}
+        </div>
+
+        {/* MOBILE: Attendance Day Cards */}
+        <div className="block sm:hidden divide-y divide-slate-100">
+          {filteredAttendance.length > 0 ? (
+            (showAllAttendance ? filteredAttendance : filteredAttendance.slice(0, 6)).map((a) => {
+              const isPresent = a.status === 'PRESENT';
+              const isHalfDay = a.status === 'HALF_DAY';
+              const isAbsent  = a.status === 'ABSENT';
+              return (
+                <div key={a.id} className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${
+                      isPresent ? 'bg-emerald-500' :
+                      isHalfDay ? 'bg-amber-500' :
+                      'bg-rose-500'
+                    }`} />
+                    <div>
+                      <div className="font-semibold text-slate-900 text-xs">
+                        {new Date(a.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                        {a.check_in ? a.check_in.slice(0,5) : '--:--'}
+                        {' → '}
+                        {a.check_out ? a.check_out.slice(0,5) : '--:--'}
+                      </div>
+                    </div>
+                  </div>
+                  <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold ${
+                    isPresent ? 'bg-emerald-50 text-emerald-700' :
+                    isHalfDay ? 'bg-amber-50 text-amber-700' :
+                    'bg-rose-50 text-rose-700'
+                  }`}>
+                    {a.status === 'HALF_DAY' ? 'Half-Day' : a.status === 'PRESENT' ? 'Present' : 'Absent'}
+                  </span>
+                </div>
+              );
+            })
+          ) : (
+            <div className="py-8 text-center text-xs text-slate-400">
+              No records match the selected filters.
+            </div>
+          )}
+        </div>
+
+        {/* DESKTOP: Attendance Table */}
+        <div className="hidden sm:block overflow-x-auto">
+          {filteredAttendance.length > 0 ? (
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-600 font-semibold text-[11px] border-b border-slate-200">
+                <tr>
+                  <th className="py-2.5 px-5">Date</th>
+                  <th className="py-2.5 px-4">Check-in Time</th>
+                  <th className="py-2.5 px-4">Check-out Time</th>
+                  <th className="py-2.5 px-4">Working Hours</th>
+                  <th className="py-2.5 px-5 text-right">Biometric Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {(showAllAttendance ? filteredAttendance : filteredAttendance.slice(0, 6)).map((a) => {
+                  const inTime  = a.check_in  ? a.check_in.slice(0, 5)  : null;
+                  const outTime = a.check_out ? a.check_out.slice(0, 5) : null;
+                  let workHours = '—';
+                  if (inTime && outTime) {
+                    const [ih, im] = inTime.split(':').map(Number);
+                    const [oh, om] = outTime.split(':').map(Number);
+                    const diff = (oh * 60 + om) - (ih * 60 + im);
+                    if (diff > 0) workHours = `${Math.floor(diff / 60)}h ${diff % 60}m`;
+                  }
+                  return (
                     <tr key={a.id} className="hover:bg-slate-50 transition">
-                      <td className="py-2.5 px-4 font-semibold text-slate-900">
-                        {new Date(a.date).toLocaleDateString('en-IN', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric'
-                        })}
+                      <td className="py-3 px-5 font-semibold text-slate-900">
+                        {new Date(a.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
-                      <td className="py-2.5 px-4 text-slate-700 font-mono">
-                        {a.check_in ? (
-                          <span className="font-bold text-slate-800">
-                            {a.check_in.slice(0, 5)}
-                          </span>
-                        ) : '—'}
-                      </td>
-                      <td className="py-2.5 px-4 text-slate-500 font-mono">
-                        {a.check_out ? a.check_out.slice(0, 5) : '—'}
-                      </td>
-                      <td className="py-2.5 px-4 text-right">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          a.status === 'PRESENT'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : a.status === 'ON_DUTY'
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                            : a.status === 'HALF_DAY'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                            : 'bg-rose-50 text-rose-700 border border-rose-200'
+                      <td className="py-3 px-4 font-mono font-bold text-slate-800">{inTime || '—'}</td>
+                      <td className="py-3 px-4 font-mono text-slate-500">{outTime || '—'}</td>
+                      <td className="py-3 px-4 text-slate-600">{workHours}</td>
+                      <td className="py-3 px-5 text-right">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                          a.status === 'PRESENT'  ? 'bg-emerald-50 text-emerald-700' :
+                          a.status === 'HALF_DAY' ? 'bg-amber-50 text-amber-700' :
+                          'bg-rose-50 text-rose-700'
                         }`}>
-                          {a.status}
+                          {a.status === 'HALF_DAY' ? 'Half-Day' : a.status === 'PRESENT' ? 'Present' : 'Absent'}
                         </span>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <div className="py-8 text-center text-xs text-slate-400">
+              No attendance records match the selected filters.
             </div>
+          )}
+        </div>
 
-            {filteredAttendance.length > 4 && (
-              <div className="pt-3 text-center">
-                <button
-                  onClick={() => setShowAllAttendance(!showAllAttendance)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-xl transition shadow-2xs cursor-pointer"
-                >
-                  <span>{showAllAttendance ? 'Show Less' : `View More (${filteredAttendance.length - 4} More Records)`}</span>
-                  {showAllAttendance ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-xs text-slate-400 py-6 text-center border border-dashed border-slate-200 rounded-xl">
-            No attendance logs found for this period.
+        {/* Show More / Less */}
+        {filteredAttendance.length > 6 && (
+          <div className="p-4 border-t border-slate-100 text-center">
+            <button
+              onClick={() => setShowAllAttendance(!showAllAttendance)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-xl transition cursor-pointer"
+            >
+              <span>{showAllAttendance ? 'Show Less' : `View All ${filteredAttendance.length} Records`}</span>
+              {showAllAttendance ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
           </div>
         )}
       </div>

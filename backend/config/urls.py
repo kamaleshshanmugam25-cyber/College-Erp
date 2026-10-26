@@ -6,7 +6,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from apps.fees import api as fees_api, views as fees_views
-from apps.core import views as core_views
+from apps.core import views as core_views, admin_api
 from apps.hr import api as hr_api, views as hr_views
 from apps.ledger import api as ledger_api
 
@@ -39,6 +39,7 @@ urlpatterns = [
     path("api/finance/quotas/create/", fees_views.create_quota_api, name="api_create_quota"),
     path("api/finance/calculator/", fees_views.fee_calculator_api, name="api_fee_calculator"),
     path("api/fees/allocate/", fees_views.allocate_fee_api, name="api_allocate_fee"),
+    path("api/finance/department-fee-allocate/", fees_views.allocate_department_fee_api, name="api_dept_fee_allocate"),
     path("api/invoices/", fees_views.invoices_api, name="api_invoices"),
     path("api/finance/tax-compliance/", fees_views.tax_compliance_api, name="api_tax_compliance"),
     path("api/portal/dues/", fees_views.my_dues_api, name="api_my_dues"),
@@ -46,6 +47,15 @@ urlpatterns = [
     path("api/portal/payslips/", hr_views.my_payslips_api, name="api_my_payslips"),
     path("api/hr/statutory-compliance/", hr_views.statutory_compliance_api, name="api_hr_statutory_compliance"),
     path("api/system/info/", core_views.system_info_api, name="api_system_info"),
+    path("api/core/access-matrix/", core_views.access_matrix_api, name="api_access_matrix"),
+
+    # Admin User Management, Granular Permissions & Audit Logs
+    path("api/admin/users/", admin_api.users_list_api, name="api_admin_users"),
+    path("api/admin/users/<int:user_id>/", admin_api.user_detail_api, name="api_admin_user_detail"),
+    path("api/admin/users/<int:user_id>/reset-password/", admin_api.user_reset_password_api, name="api_admin_reset_password"),
+    path("api/admin/permissions/", admin_api.permissions_matrix_api, name="api_admin_permissions"),
+    path("api/admin/audit-logs/", admin_api.audit_logs_api, name="api_admin_audit_logs"),
+
     path("api/", include(router.urls)),
 
     path("webhooks/<str:gateway>/", fees_views.payment_webhook, name="payment_webhook"),

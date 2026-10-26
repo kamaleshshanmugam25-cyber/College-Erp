@@ -7,10 +7,16 @@ import { FeeCalculator } from './pages/FeeCalculator';
 import { StudentPortal } from './pages/StudentPortal';
 import { HRManagement } from './pages/HRManagement';
 import { EmployeePortal } from './pages/EmployeePortal';
+import { EmployeeDetailsView } from './components/EmployeeDetailsView';
+import { RolePermissionView } from './pages/RolePermissionView';
+import { UserManagementView } from './pages/UserManagementView';
+import { AuditLogsView } from './pages/AuditLogsView';
+import { AccessDeniedView } from './components/AccessDeniedView';
+import { LedgerView } from './components/LedgerView';
+import { ScholarshipsView } from './components/ScholarshipsView';
 import { ModuleView } from './pages/ModuleView';
 import { LoginPage } from './pages/LoginPage';
 import { Building2, RefreshCw } from 'lucide-react';
-
 import { MobileBottomNav } from './components/MobileBottomNav';
 
 function getSavedTab() {
@@ -24,9 +30,11 @@ function getSavedTab() {
 }
 
 function MainApp() {
-  const { user, loading, hasRole } = useAuth();
+  const { user, loading, hasRole, canAccessModule } = useAuth();
   const [activeTab, setActiveTabState] = useState(() => getSavedTab() || 'finance-dashboard');
   const [lastUsername, setLastUsername] = useState(null);
+
+  const isAdmin = hasRole('Super Admin', 'Finance Admin');
 
   const handleTabChange = (newTab) => {
     setActiveTabState(newTab);
@@ -49,27 +57,53 @@ function MainApp() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [activeTab]);
 
-  // Set default tab on initial login if no tab was already selected/saved
+  // Set appropriate tab when user or role changes
   useEffect(() => {
     if (!user) return;
     if (user.username !== lastUsername) {
       setLastUsername(user.username);
-      const savedTab = getSavedTab();
-      if (!savedTab) {
-        let initialTab = 'finance-dashboard';
-        if (hasRole('Student/Parent') && !hasRole('Super Admin', 'Finance Admin')) {
-          initialTab = 'student-portal';
-        } else if (hasRole('Employee') && !hasRole('Super Admin', 'HR Admin', 'Finance Admin')) {
-          initialTab = 'employee-leaves';
-        } else if (hasRole('HR Admin') && !hasRole('Super Admin', 'Finance Admin')) {
-          initialTab = 'attendance-leaves';
-        }
-        handleTabChange(initialTab);
-      } else {
-        if (!window.location.hash) {
-          window.history.replaceState(null, '', `#${savedTab}`);
+      const isSuper = hasRole('Super Admin');
+      const isFinance = isSuper || hasRole('Finance Admin', 'Finance User', 'Accountant', 'Fee Manager', 'Viewer');
+      const isHR = isSuper || hasRole('HR Admin');
+      const isStudent = hasRole('Student/Parent');
+      const isEmployee = hasRole('Employee');
+
+      let targetTab = getSavedTab() || activeTab;
+
+      // Ensure target tab is accessible for the authenticated role
+      if (!isSuper) {
+        if (user.accessible_modules && Array.isArray(user.accessible_modules) && user.accessible_modules.length > 0) {
+          if (!user.accessible_modules.includes(targetTab)) {
+            if (isStudent && user.accessible_modules.includes('student-portal')) {
+              targetTab = 'student-portal';
+            } else if (isEmployee && user.accessible_modules.includes('employee-details')) {
+              targetTab = 'employee-details';
+            } else if (isHR && user.accessible_modules.includes('attendance-leaves')) {
+              targetTab = 'attendance-leaves';
+            } else if (isFinance && user.accessible_modules.includes('finance-dashboard')) {
+              targetTab = 'finance-dashboard';
+            } else {
+              targetTab = user.accessible_modules[0];
+            }
+          }
+        } else {
+          if (isStudent && !isFinance && !isHR) {
+            const studentTabs = ['student-portal', 'student-details', 'student-scholarships', 'academic-calendar'];
+            if (!studentTabs.includes(targetTab)) targetTab = 'student-portal';
+          } else if (isEmployee && !isFinance && !isHR) {
+            const employeeTabs = ['employee-details', 'employee-leaves', 'employee-appraisal', 'employee-payslips'];
+            if (!employeeTabs.includes(targetTab)) targetTab = 'employee-details';
+          } else if (isHR && !isFinance) {
+            const hrTabs = ['employee-lifecycle', 'attendance-leaves', 'holidays', 'performance-appraisal', 'payroll-processing'];
+            if (!hrTabs.includes(targetTab)) targetTab = 'attendance-leaves';
+          } else if (isFinance) {
+            const financeTabs = ['finance-dashboard', 'financial-reports', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger'];
+            if (!financeTabs.includes(targetTab)) targetTab = 'finance-dashboard';
+          }
         }
       }
+
+      handleTabChange(targetTab);
     }
   }, [user?.username]);
 
@@ -100,16 +134,77 @@ function MainApp() {
         return <FinanceDashboard />;
       case 'fee-structures':
         return <FeeCalculator />;
+      case 'scholarships':
+      case 'student-scholarships':
+        return <ScholarshipsView />;
+      case 'general-ledger':
+        if (hasRole('Fee Manager', 'Viewer') && !isAdmin && !hasRole('Accountant', 'Finance User')) {
+          return (
+            <AccessDeniedView
+              requiredRole="Finance Admin, Accountant or Finance User"
+              reason="General & Journal Ledger functions are restricted to authorized financial personnel."
+              onGoHome={() => handleTabChange('finance-dashboard')}
+            />
+          );
+        }
+        return <LedgerView />;
+      case 'invoices-receipts':
+        return <FinanceDashboard />;
+      case 'user-management':
+      case 'finance-users':
+        if (!isAdmin) {
+          return (
+            <AccessDeniedView
+              requiredRole="Finance Admin"
+              reason="Finance User & Role Management is restricted to institutional Finance Administrators."
+              onGoHome={() => handleTabChange('finance-dashboard')}
+            />
+          );
+        }
+        return <UserManagementView />;
+      case 'role-permissions':
+      case 'access-matrix':
+        if (!isAdmin) {
+          return (
+            <AccessDeniedView
+              requiredRole="Finance Admin"
+              reason="Role & Permission configuration is restricted to institutional Finance Administrators."
+              onGoHome={() => handleTabChange('finance-dashboard')}
+            />
+          );
+        }
+        return <RolePermissionView />;
+      case 'audit-logs':
+        if (!isAdmin) {
+          return (
+            <AccessDeniedView
+              requiredRole="Finance Admin"
+              reason="Security Audit Logs are restricted to institutional Finance Administrators."
+              onGoHome={() => handleTabChange('finance-dashboard')}
+            />
+          );
+        }
+        return <AuditLogsView />;
       case 'student-details':
       case 'student-portal':
         return <StudentPortal />;
       case 'attendance-leaves':
       case 'payroll-processing':
         return <HRManagement />;
+      case 'employee-details':
+        return <EmployeeDetailsView setActiveTab={handleTabChange} />;
       case 'employee-payslips':
       case 'employee-leaves':
         return <EmployeePortal />;
       default:
+        if (!canAccessModule(activeTab) && !isAdmin) {
+          return (
+            <AccessDeniedView
+              reason="Your role does not have authorization to view this module."
+              onGoHome={() => handleTabChange('finance-dashboard')}
+            />
+          );
+        }
         return <ModuleView moduleId={activeTab} />;
     }
   };
@@ -127,7 +222,6 @@ function MainApp() {
     </div>
   );
 }
-
 
 export default function App() {
   return (

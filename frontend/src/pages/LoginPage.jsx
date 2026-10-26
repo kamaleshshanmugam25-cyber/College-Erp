@@ -296,11 +296,17 @@ export function LoginPage() {
                   onChange={(e) => setRegRole(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 >
+                  <option value="Super Admin">⭐ Super Admin (Full Access)</option>
+                  <option value="Finance Admin">Finance Officer</option>
+                  <option value="HR Admin">HR Administrator</option>
                   <option value="Employee">Faculty / Employee</option>
                   <option value="Student/Parent">Student / Parent</option>
-                  <option value="HR Admin">HR Administrator</option>
-                  <option value="Finance Admin">Finance Officer</option>
                 </select>
+                {regRole === 'Super Admin' && (
+                  <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 mt-1.5 font-semibold">
+                    ⚠️ Super Admin has unrestricted access to all Finance, HR, Payroll, and Student records.
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2.5">

@@ -17,11 +17,11 @@ import {
   ChevronUp
 } from 'lucide-react';
 
+import { StaffAttendanceSection } from '../components/StaffAttendanceSection';
+
 export function HRManagement() {
   const [leaves, setLeaves] = useState([]);
   const [attendance, setAttendance] = useState([]);
-  const [attendanceSearch, setAttendanceSearch] = useState('');
-  const [selectedAttMonth, setSelectedAttMonth] = useState('ALL');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
@@ -336,171 +336,8 @@ export function HRManagement() {
         )}
       </div>
 
-      {/* Institutional Attendance Logs */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden space-y-4 p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-          <div>
-            <h2 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-blue-600" />
-              <span>Faculty & Staff Attendance Logs</span>
-            </h2>
-            <p className="text-[11px] sm:text-xs text-slate-500">
-              Synchronized biometric logs across all academic and administrative departments
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {['ALL', '10', '09'].map((m) => (
-              <button
-                key={m}
-                onClick={() => setSelectedAttMonth(m)}
-                className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold transition shrink-0 cursor-pointer ${
-                  selectedAttMonth === m
-                    ? 'bg-blue-600 text-white shadow-2xs'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-                }`}
-              >
-                {m === 'ALL' ? 'All Months' : m === '10' ? 'October 2026' : 'September 2026'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search by faculty, staff ID, or department..."
-            value={attendanceSearch}
-            onChange={(e) => setAttendanceSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500/20"
-          />
-        </div>
-
-        {/* MOBILE ATTENDANCE CARDS VIEW */}
-        <div className="block sm:hidden divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
-          {attendance
-            .filter((a) => {
-              const matchMonth = selectedAttMonth === 'ALL' || a.date?.startsWith(`2026-${selectedAttMonth}`);
-              const matchSearch =
-                !attendanceSearch ||
-                a.employee_name?.toLowerCase().includes(attendanceSearch.toLowerCase()) ||
-                a.staff_id?.toLowerCase().includes(attendanceSearch.toLowerCase()) ||
-                a.department?.toLowerCase().includes(attendanceSearch.toLowerCase());
-              return matchMonth && matchSearch;
-            })
-            .slice(0, 30)
-            .map((a) => (
-              <div key={a.id} className="p-3 bg-white space-y-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-slate-900">{a.employee_name}</span>
-                    <span className="text-[10px] font-mono font-semibold text-blue-700">({a.staff_id})</span>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                    a.status === 'PRESENT'
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : a.status === 'ON_DUTY'
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                      : a.status === 'HALF_DAY'
-                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                      : 'bg-rose-50 text-rose-700 border border-rose-200'
-                  }`}>
-                    {a.status}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] text-slate-500">
-                  <div className="flex items-center gap-1">
-                    <span className="font-semibold text-slate-700">
-                      {new Date(a.date).toLocaleDateString('en-IN', {
-                        weekday: 'short',
-                        day: '2-digit',
-                        month: 'short'
-                      })}
-                    </span>
-                    <span>• {a.department}</span>
-                  </div>
-                  <div className="font-mono text-slate-700 font-medium">
-                    {a.check_in ? a.check_in.slice(0, 5) : '—'} → {a.check_out ? a.check_out.slice(0, 5) : '—'}
-                  </div>
-                </div>
-              </div>
-            ))}
-        </div>
-
-        {/* DESKTOP ATTENDANCE TABLE VIEW */}
-        <div className="hidden sm:block border border-slate-200 rounded-xl overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[620px]">
-            <thead className="bg-slate-50 text-slate-600 font-semibold text-[11px] border-b border-slate-200">
-              <tr>
-                <th className="py-2.5 px-3">Date</th>
-                <th className="py-2.5 px-3">Faculty / Staff Member</th>
-                <th className="py-2.5 px-3">Department</th>
-                <th className="py-2.5 px-3">Check-In / Out</th>
-                <th className="py-2.5 px-3">Duration</th>
-                <th className="py-2.5 px-3 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {attendance
-                .filter((a) => {
-                  const matchMonth = selectedAttMonth === 'ALL' || a.date?.startsWith(`2026-${selectedAttMonth}`);
-                  const matchSearch =
-                    !attendanceSearch ||
-                    a.employee_name?.toLowerCase().includes(attendanceSearch.toLowerCase()) ||
-                    a.staff_id?.toLowerCase().includes(attendanceSearch.toLowerCase()) ||
-                    a.department?.toLowerCase().includes(attendanceSearch.toLowerCase());
-                  return matchMonth && matchSearch;
-                })
-                .slice(0, 30)
-                .map((a) => (
-                  <tr key={a.id} className="hover:bg-slate-50">
-                    <td className="py-2.5 px-3 font-semibold text-slate-900">
-                      {new Date(a.date).toLocaleDateString('en-IN', {
-                        weekday: 'short',
-                        day: '2-digit',
-                        month: 'short'
-                      })}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <div className="font-bold text-slate-900">{a.employee_name}</div>
-                      <div className="text-[10px] text-blue-700 font-mono font-semibold">{a.staff_id}</div>
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-600">
-                      <span className="flex items-center gap-1">
-                        <Building2 className="w-3 h-3 text-slate-400" />
-                        <span>{a.department}</span>
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-700 font-mono">
-                      <span>{a.check_in ? a.check_in.slice(0, 5) : '—'}</span>
-                      <span className="mx-1 text-slate-300">→</span>
-                      <span>{a.check_out ? a.check_out.slice(0, 5) : '—'}</span>
-                    </td>
-                    <td className="py-2.5 px-3 font-semibold text-slate-700">
-                      {a.working_hours || '8h 00m'}
-                    </td>
-                    <td className="py-2.5 px-3 text-right">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        a.status === 'PRESENT'
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : a.status === 'ON_DUTY'
-                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                          : a.status === 'HALF_DAY'
-                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                          : 'bg-rose-50 text-rose-700 border border-rose-200'
-                      }`}>
-                        {a.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Faculty & Staff Attendance Logs */}
+      <StaffAttendanceSection attendance={attendance} />
     </div>
   );
 }

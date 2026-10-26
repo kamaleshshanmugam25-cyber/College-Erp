@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
   Calculator,
-  CreditCard,
   Receipt,
   Award,
   Users,
@@ -11,40 +10,39 @@ import {
   TrendingUp,
   Scale,
   Calendar,
-  Building,
-  GraduationCap,
+  UserCheck,
   ShieldCheck,
-  UserCircle2
+  Clock,
+  UserPlus,
+  FileText
 } from 'lucide-react';
 
 export function Sidebar({ activeTab, setActiveTab }) {
-  const { hasRole, user } = useAuth();
-
-  const isSuper = hasRole('Super Admin');
-  const isFinance = isSuper || hasRole('Finance Admin');
-  const isHR = isSuper || hasRole('HR Admin');
-  const isStudent = isSuper || hasRole('Student/Parent');
-  const isEmployee = isSuper || hasRole('Employee');
-
-  const primaryRole = (!user?.is_superuser && user?.roles?.[0])
-    ? user.roles[0]
-    : (user?.is_superuser ? 'Super Admin' : (user?.roles?.[0] || 'User'));
+  const { hasRole, canAccessModule } = useAuth();
+  const isAdmin = hasRole('Super Admin', 'Finance Admin');
 
   const navSections = [
     {
       title: 'Fee & Financial Management',
-      visible: isFinance,
       items: [
         { id: 'finance-dashboard', label: 'Financial Overview', icon: LayoutDashboard },
         { id: 'fee-structures', label: 'Fee Structures & Calculator', icon: Calculator },
         { id: 'invoices-receipts', label: 'Invoices & Receipts', icon: Receipt },
         { id: 'scholarships', label: 'Scholarships & Waivers', icon: Award },
         { id: 'general-ledger', label: 'General & Journal Ledger', icon: Scale },
+        { id: 'financial-reports', label: 'Financial Reports', icon: TrendingUp },
+      ],
+    },
+    {
+      title: 'Administration & Security',
+      items: [
+        { id: 'user-management', label: 'Finance Users & Roles', icon: Users, adminOnly: true },
+        { id: 'role-permissions', label: 'Role & Permissions', icon: ShieldCheck, adminOnly: true },
+        { id: 'audit-logs', label: 'Audit Logs', icon: Clock, adminOnly: true },
       ],
     },
     {
       title: 'HR & Payroll Management',
-      visible: isHR,
       items: [
         { id: 'employee-lifecycle', label: 'Employee Lifecycle', icon: Users },
         { id: 'attendance-leaves', label: 'Attendance & Leaves', icon: CalendarCheck2 },
@@ -54,7 +52,6 @@ export function Sidebar({ activeTab, setActiveTab }) {
     },
     {
       title: 'Student Management & Services',
-      visible: isStudent,
       items: [
         { id: 'student-portal', label: 'My Dues & Receipts', icon: Receipt },
         { id: 'student-scholarships', label: 'Scholarships & Concessions', icon: Award },
@@ -63,18 +60,32 @@ export function Sidebar({ activeTab, setActiveTab }) {
     },
     {
       title: 'Employee Self-Service',
-      visible: isEmployee,
       items: [
+        { id: 'employee-details', label: 'Employee Details', icon: UserCheck },
         { id: 'employee-leaves', label: 'Apply Leave / My Attendance', icon: Calendar },
         { id: 'employee-appraisal', label: 'My Appraisals', icon: Award },
       ],
     },
   ];
 
+  // Dynamically filter sections and items according to declared access permissions
+  const visibleSections = navSections.map((section) => {
+    const allowedItems = section.items.filter((item) => {
+      if (item.adminOnly) return isAdmin;
+      return canAccessModule(item.id);
+    });
+
+    return {
+      ...section,
+      items: allowedItems,
+      visible: allowedItems.length > 0,
+    };
+  }).filter((s) => s.visible);
+
   return (
-    <aside className="hidden md:flex w-64 bg-white border-r border-slate-200 flex-col shrink-0 h-full select-none">
-      <div className="p-3 space-y-5 overflow-y-auto flex-1">
-        {navSections.filter((s) => s.visible).map((section, idx) => (
+    <aside className="hidden md:flex w-64 bg-white border-r border-slate-200 flex-col shrink-0 h-full select-none justify-between">
+      <div className="p-3 space-y-4 overflow-y-auto flex-1">
+        {visibleSections.map((section, idx) => (
           <div key={section.title} className={idx > 0 ? "pt-3 border-t border-slate-100" : ""}>
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">
               {section.title}
@@ -101,6 +112,15 @@ export function Sidebar({ activeTab, setActiveTab }) {
             </nav>
           </div>
         ))}
+      </div>
+
+      {/* Clean Sidebar Footer */}
+      <div className="p-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-[10px] text-slate-400">
+        <span>Apex ERP v2.4</span>
+        <span className="flex items-center gap-1 text-emerald-600 font-semibold">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          Live
+        </span>
       </div>
     </aside>
   );

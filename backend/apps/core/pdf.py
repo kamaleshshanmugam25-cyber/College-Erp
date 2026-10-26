@@ -126,19 +126,27 @@ def _render_payslip_pdf(context: dict) -> bytes:
     right_bold = ParagraphStyle('RB', parent=bold_style, alignment=2)
     right_norm = ParagraphStyle('RN', parent=norm_style, alignment=2)
 
+    emp_name = getattr(emp, "name", None) or (emp.user.get_full_name() if hasattr(emp, "user") else "-")
+    basic = float(getattr(p, "basic_salary", getattr(p, "basic_pay", 0)))
+    gross = float(getattr(p, "gross_salary", getattr(p, "gross", 0)))
+    pf = float(getattr(p, "pf", getattr(p, "pf_deduction", 0)))
+    esi = float(getattr(p, "esi", getattr(p, "esi_deduction", 0)))
+    tds = float(getattr(p, "tds", getattr(p, "tds_deduction", 0)))
+    net = float(getattr(p, "net_salary", getattr(p, "net_pay", 0)))
+
     elements = [
         Paragraph("<b>Apex University ERP — Employee Salary Payslip</b>", ParagraphStyle('H1', parent=styles['Heading1'], fontSize=14, leading=16, textColor=colors.HexColor('#0037b0'))),
-        Paragraph(f"Period: {p.month}/{p.year} • Employee: {emp.name if emp else '-'}", norm_style),
+        Paragraph(f"Period: {getattr(p, 'month', '-')}/{getattr(p, 'year', '-')} • Employee: {emp_name}", norm_style),
         Spacer(1, 10),
     ]
     data = [
-        [Paragraph("Basic Pay", norm_style), Paragraph(f"Rs. {float(p.basic_pay):,.2f}", right_norm)],
-        [Paragraph("Gross Salary", bold_style), Paragraph(f"Rs. {float(p.gross):,.2f}", right_bold)],
-        [Paragraph("PF Deduction (12%)", norm_style), Paragraph(f"-Rs. {float(p.pf_deduction):,.2f}", right_norm)],
-        [Paragraph("ESI Deduction (0.75%)", norm_style), Paragraph(f"-Rs. {float(p.esi_deduction):,.2f}", right_norm)],
-        [Paragraph("TDS / Income Tax Deduction", norm_style), Paragraph(f"-Rs. {float(p.tds_deduction):,.2f}", right_norm)],
+        [Paragraph("Basic Pay", norm_style), Paragraph(f"Rs. {basic:,.2f}", right_norm)],
+        [Paragraph("Gross Salary", bold_style), Paragraph(f"Rs. {gross:,.2f}", right_bold)],
+        [Paragraph("PF Deduction (12%)", norm_style), Paragraph(f"-Rs. {pf:,.2f}", right_norm)],
+        [Paragraph("ESI Deduction (0.75%)", norm_style), Paragraph(f"-Rs. {esi:,.2f}", right_norm)],
+        [Paragraph("TDS / Income Tax Deduction", norm_style), Paragraph(f"-Rs. {tds:,.2f}", right_norm)],
         [Paragraph("<b>Net Disbursed Salary</b>", ParagraphStyle('NL', parent=bold_style, fontSize=11, textColor=colors.HexColor('#059669'))),
-         Paragraph(f"<b>Rs. {float(p.net_pay):,.2f}</b>", ParagraphStyle('NR', parent=right_bold, fontSize=11, textColor=colors.HexColor('#059669')))],
+         Paragraph(f"<b>Rs. {net:,.2f}</b>", ParagraphStyle('NR', parent=right_bold, fontSize=11, textColor=colors.HexColor('#059669')))],
     ]
     t = Table(data, colWidths=[200, 190])
     t.setStyle(TableStyle([
