@@ -119,6 +119,7 @@ export function UserManagementView() {
   // Delete user state
   const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
   const [submittingDelete, setSubmittingDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   // Role change state
   const [selectedNewRole, setSelectedNewRole] = useState('Finance User');
@@ -155,14 +156,15 @@ export function UserManagementView() {
   const handleDeleteUser = async () => {
     if (!deleteConfirmUser) return;
     setSubmittingDelete(true);
-    setError(null);
+    setDeleteError('');
     try {
       const res = await api.deleteAdminUser(deleteConfirmUser.id);
       notify(res.message || `User account '@${deleteConfirmUser.username}' deleted successfully.`);
+      setUsers((prev) => prev.filter((u) => u.id !== deleteConfirmUser.id));
       setDeleteConfirmUser(null);
       await loadUsers(pagination.page);
     } catch (err) {
-      setError(err.message || 'Failed to delete user.');
+      setDeleteError(err.message || 'Failed to delete user.');
     } finally {
       setSubmittingDelete(false);
     }
@@ -612,7 +614,7 @@ export function UserManagementView() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => setDeleteConfirmUser(u)}
+                            onClick={() => { setDeleteError(''); setDeleteConfirmUser(u); }}
                             disabled={isCurrent}
                             className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                             title={isCurrent ? "You cannot delete your own account" : "Delete User Account"}
@@ -1231,6 +1233,13 @@ export function UserManagementView() {
               <p className="text-xs text-slate-500 leading-relaxed">
                 Are you sure you want to permanently delete <strong className="text-slate-800">@{deleteConfirmUser.username}</strong> ({deleteConfirmUser.name || 'Unnamed'})? This action will permanently remove their credentials and access privileges.
               </p>
+
+              {deleteError && (
+                <div className="mt-3 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center gap-2 animate-in fade-in">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{deleteError}</span>
+                </div>
+              )}
 
               <div className="mt-6 flex items-center justify-end gap-2.5">
                 <button

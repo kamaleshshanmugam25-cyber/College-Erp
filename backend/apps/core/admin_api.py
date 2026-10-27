@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q, Count
+from django.db.models import Q, Count, ProtectedError
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -319,8 +319,10 @@ def user_detail_api(request, user_id):
     is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
     if not is_super:
         target_role = primary_role(target_user)
-        if target_user.is_superuser or target_role in (Roles.SUPER_ADMIN, Roles.HR_ADMIN, Roles.EMPLOYEE, Roles.STUDENT_PARENT):
-            return JsonResponse({"error": "Access denied. Finance Admin cannot manage institutional administrators or non-finance employees."}, status=403)
+        if target_user.is_superuser or target_role in (Roles.SUPER_ADMIN, Roles.HR_ADMIN):
+            return JsonResponse({"error": "Access denied. Finance Admin cannot manage institutional administrators."}, status=403)
+        if request.method != "DELETE" and target_role in (Roles.EMPLOYEE, Roles.STUDENT_PARENT):
+            return JsonResponse({"error": "Access denied. Finance Admin cannot manage non-finance employees."}, status=403)
 
     if request.method == "GET":
         recent_logs = AuditLog.objects.filter(
@@ -514,6 +516,13 @@ def user_detail_api(request, user_id):
                 if hasattr(target_user, "erp_profile"):
                     target_user.erp_profile.delete()
                 target_user.delete()
+        except ProtectedError:
+            target_user.is_active = False
+            target_user.save(update_fields=["is_active"])
+            return JsonResponse({
+                "success": True,
+                "message": f"User account '{username_deleted}' has associated academic/fee records and was deactivated."
+            })
         except Exception as e:
             return JsonResponse({"error": f"Failed to delete user '{username_deleted}': {str(e)}"}, status=400)
 
@@ -540,8 +549,10 @@ def user_reset_password_api(request, user_id):
     is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
     if not is_super:
         target_role = primary_role(target_user)
-        if target_user.is_superuser or target_role in (Roles.SUPER_ADMIN, Roles.HR_ADMIN, Roles.EMPLOYEE, Roles.STUDENT_PARENT):
-            return JsonResponse({"error": "Access denied. Finance Admin cannot manage institutional administrators or non-finance employees."}, status=403)
+        if target_user.is_superuser or target_role in (Roles.SUPER_ADMIN, Roles.HR_ADMIN):
+            return JsonResponse({"error": "Access denied. Finance Admin cannot manage institutional administrators."}, status=403)
+        if request.method != "DELETE" and target_role in (Roles.EMPLOYEE, Roles.STUDENT_PARENT):
+            return JsonResponse({"error": "Access denied. Finance Admin cannot manage non-finance employees."}, status=403)
 
     try:
         data = json.loads(request.body.decode("utf-8")) if request.body else {}
