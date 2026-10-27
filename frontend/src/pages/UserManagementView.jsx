@@ -469,7 +469,7 @@ export function UserManagementView() {
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search by name, username, email, staff ID..."
+            placeholder="Search by name, username, email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -565,12 +565,6 @@ export function UserManagementView() {
                             </div>
                             <div className="text-[11px] text-slate-500 font-mono flex items-center gap-2 mt-0.5 flex-wrap">
                               <span>@{u.username}</span>
-                              {u.staff_id && (
-                                <>
-                                  <span>·</span>
-                                  <span className="text-slate-600 font-semibold">ID: {u.staff_id}</span>
-                                </>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -713,28 +707,16 @@ export function UserManagementView() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Email Address *</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="ramesh@apex.edu"
-                    value={createForm.email}
-                    onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Employee / Staff ID</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. FIN004"
-                    value={createForm.staff_id}
-                    onChange={(e) => setCreateForm({ ...createForm, staff_id: e.target.value })}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono"
-                  />
-                </div>
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="ramesh@apex.edu"
+                  value={createForm.email}
+                  onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                  className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
               </div>
 
               {/* Step 1: Assigned Role */}
@@ -967,7 +949,7 @@ export function UserManagementView() {
                   </div>
                   <div>
                     <span className="font-bold text-slate-900 block text-xs">{roleChangeUser.name}</span>
-                    <span className="text-[11px] text-slate-500 font-mono">@{roleChangeUser.username} {roleChangeUser.staff_id ? `· ID: ${roleChangeUser.staff_id}` : ''}</span>
+                    <span className="text-[11px] text-slate-500 font-mono">@{roleChangeUser.username}</span>
                   </div>
                 </div>
                 <div className="text-right">
@@ -1186,25 +1168,14 @@ export function UserManagementView() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Staff ID</label>
-                  <input
-                    type="text"
-                    value={editForm.staff_id}
-                    onChange={(e) => setEditForm({ ...editForm, staff_id: e.target.value })}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Role *</label>
-                  <input
-                    type="text"
-                    value={editForm.role}
-                    onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 font-bold focus:outline-none"
-                  />
-                </div>
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Role *</label>
+                <input
+                  type="text"
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                  className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 font-bold focus:outline-none"
+                />
               </div>
 
               <div className="pt-2 flex items-center justify-between border-t border-slate-100">
