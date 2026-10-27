@@ -119,6 +119,12 @@ def users_list_api(request):
                 Q(erp_profile__department__icontains=search)
             )
 
+        is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
+        if not is_super:
+            # Finance Admin can ONLY view and manage Finance team members: Finance User, Accountant, and Finance Admin
+            finance_roles = [Roles.FINANCE_USER, Roles.ACCOUNTANT, Roles.FINANCE_ADMIN]
+            qs = qs.filter(groups__name__in=finance_roles).exclude(is_superuser=True).distinct()
+
         # Role filter
         role_filter = request.GET.get("role", "").strip()
         if role_filter and role_filter != "ALL":
@@ -142,18 +148,29 @@ def users_list_api(request):
         else:
             qs = qs.order_by("-id")
 
-        # Global stats (unfiltered by pagination)
-        all_users = User.objects.all()
-        total_count = all_users.count()
-        active_count = all_users.filter(is_active=True).count()
-        inactive_count = total_count - active_count
-
-        role_counts = {}
-        for r in Roles.ALL:
-            if r == Roles.SUPER_ADMIN:
-                role_counts[r] = all_users.filter(is_superuser=True).count()
-            else:
-                role_counts[r] = all_users.filter(groups__name=r).count()
+        # Global stats (scoped to Finance Admin authority)
+        if not is_super:
+            finance_roles = [Roles.FINANCE_USER, Roles.ACCOUNTANT, Roles.FINANCE_ADMIN]
+            all_users = User.objects.filter(groups__name__in=finance_roles).exclude(is_superuser=True).distinct()
+            total_count = all_users.count()
+            active_count = all_users.filter(is_active=True).count()
+            inactive_count = total_count - active_count
+            role_counts = {
+                Roles.FINANCE_ADMIN: all_users.filter(groups__name=Roles.FINANCE_ADMIN).count(),
+                Roles.ACCOUNTANT: all_users.filter(groups__name=Roles.ACCOUNTANT).count(),
+                Roles.FINANCE_USER: all_users.filter(groups__name=Roles.FINANCE_USER).count(),
+            }
+        else:
+            all_users = User.objects.all()
+            total_count = all_users.count()
+            active_count = all_users.filter(is_active=True).count()
+            inactive_count = total_count - active_count
+            role_counts = {}
+            for r in Roles.ALL:
+                if r == Roles.SUPER_ADMIN:
+                    role_counts[r] = all_users.filter(is_superuser=True).count()
+                else:
+                    role_counts[r] = all_users.filter(groups__name=r).count()
 
         # Pagination
         page_num = int(request.GET.get("page", 1))
@@ -304,6 +321,11 @@ def user_detail_api(request, user_id):
         return JsonResponse({"error": "User not found"}, status=404)
 
     is_self = (request.user.id == target_user.id)
+    is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
+    if not is_super:
+        target_role = primary_role(target_user)
+        if target_user.is_superuser or target_role == Roles.SUPER_ADMIN or target_role not in (Roles.FINANCE_USER, Roles.ACCOUNTANT, Roles.FINANCE_ADMIN):
+            return JsonResponse({"error": "Access denied. Finance Admin can only manage Finance User and Accountant accounts."}, status=403)
 
     if request.method == "GET":
         recent_logs = AuditLog.objects.filter(
@@ -506,6 +528,12 @@ def user_reset_password_api(request, user_id):
         target_user = User.objects.get(id=user_id)
     except User.DoesNotExist:
         return JsonResponse({"error": "User not found"}, status=404)
+
+    is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
+    if not is_super:
+        target_role = primary_role(target_user)
+        if target_user.is_superuser or target_role == Roles.SUPER_ADMIN or target_role not in (Roles.FINANCE_USER, Roles.ACCOUNTANT, Roles.FINANCE_ADMIN):
+            return JsonResponse({"error": "Access denied. Finance Admin can only manage Finance User and Accountant accounts."}, status=403)
 
     try:
         data = json.loads(request.body.decode("utf-8")) if request.body else {}
