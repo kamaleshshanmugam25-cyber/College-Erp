@@ -186,9 +186,14 @@ export function UserManagementView() {
       };
       const data = await api.getAdminUsers(params);
       if (data.success) {
-        setUsers(data.users || []);
+        const financeOnly = (data.users || []).filter(u =>
+          u.role !== 'Student/Parent' &&
+          u.role !== 'Student' &&
+          !u.username?.toLowerCase().startsWith('student')
+        );
+        setUsers(financeOnly);
         setStats(data.stats || null);
-        setPagination(data.pagination || { page: 1, page_size: 10, total_records: data.users?.length || 0, total_pages: 1 });
+        setPagination(data.pagination || { page: 1, page_size: 10, total_records: financeOnly.length, total_pages: 1 });
       }
     } catch (err) {
       setError(err.message || 'Failed to load user registry.');
@@ -447,7 +452,7 @@ export function UserManagementView() {
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Registered Users</div>
           <div className="text-2xl font-bold text-slate-900 mt-1">{stats?.total_users || users.length}</div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Active institutional user accounts</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Active finance personnel accounts</div>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
@@ -514,7 +519,7 @@ export function UserManagementView() {
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-blue-600" />
             <span className="font-bold text-sm text-slate-900">
-              Institutional Users Registry ({pagination.total_records || users.length})
+              Finance Team Registry ({pagination.total_records || users.length})
             </span>
           </div>
           <span className="text-xs text-slate-400">
