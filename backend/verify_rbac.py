@@ -32,36 +32,50 @@ assert res.status_code == 200, f"Status {res.status_code}"
 data = json.loads(res.content.decode('utf-8'))
 print(f"[TEST 1 PASSED] Total users in registry: {data['stats']['total_users']}")
 
-# Test 2: Finance Admin assigns 'Finance User' role to target user
+# Test 2: Finance Admin assigns 'Finance User' and 'Accountant' roles to target user
 target = User.objects.filter(username='viewer').first()
 assert target is not None, "Target user not found"
-patch_req = rf.patch(
+
+# 2.1 Finance Admin assigns Accountant
+patch_acc = rf.patch(
+    f'/api/admin/users/{target.id}/',
+    data=json.dumps({'role': Roles.ACCOUNTANT}),
+    content_type='application/json'
+)
+patch_acc.user = fa
+res_acc = user_detail_api(patch_acc, target.id)
+assert res_acc.status_code == 200, f"Assign Accountant failed: {res_acc.content}"
+target.refresh_from_db()
+if hasattr(target, '_erp_roles'):
+    del target._erp_roles
+print(f"[TEST 2 PASSED] Finance Admin assigned '{Roles.ACCOUNTANT}' to @{target.username}")
+assert primary_role(target) == Roles.ACCOUNTANT
+
+# 2.2 Finance Admin assigns Finance User
+patch_fu = rf.patch(
     f'/api/admin/users/{target.id}/',
     data=json.dumps({'role': Roles.FINANCE_USER}),
     content_type='application/json'
 )
-patch_req.user = fa
-res_patch = user_detail_api(patch_req, target.id)
-assert res_patch.status_code == 200, f"Assign role failed: {res_patch.content}"
+patch_fu.user = fa
+res_fu = user_detail_api(patch_fu, target.id)
+assert res_fu.status_code == 200, f"Assign Finance User failed: {res_fu.content}"
 target.refresh_from_db()
 if hasattr(target, '_erp_roles'):
     del target._erp_roles
-print(f"[TEST 2 PASSED] Assigned role '{Roles.FINANCE_USER}' to user @{target.username}. Current role: {primary_role(target)}")
+print(f"[TEST 2.1 PASSED] Finance Admin assigned '{Roles.FINANCE_USER}' to @{target.username}")
 assert primary_role(target) == Roles.FINANCE_USER
 
-# Reassign back to Viewer
-patch_req2 = rf.patch(
+# 2.3 Finance Admin is BLOCKED from assigning Viewer or other unauthorized roles (400 Bad Request)
+patch_block = rf.patch(
     f'/api/admin/users/{target.id}/',
-    data=json.dumps({'role': Roles.VIEWER}),
+    data=json.dumps({'role': 'Viewer'}),
     content_type='application/json'
 )
-patch_req2.user = fa
-user_detail_api(patch_req2, target.id)
-target.refresh_from_db()
-if hasattr(target, '_erp_roles'):
-    del target._erp_roles
-print(f"[TEST 2.1 PASSED] Restored role to '{primary_role(target)}'")
-assert primary_role(target) == Roles.VIEWER
+patch_block.user = fa
+res_block = user_detail_api(patch_block, target.id)
+assert res_block.status_code == 400, f"Expected 400 when assigning Viewer, got {res_block.status_code}"
+print("[TEST 2.2 PASSED] Finance Admin blocked from assigning unauthorized role 'Viewer' (400 Bad Request)")
 
 # Test 3: Unauthorized user (Finance User) cannot access user management
 fu = User.objects.filter(username='financeuser').first()
@@ -102,7 +116,6 @@ roles_to_test = [
     ('Finance User', 'finance-dashboard'),
     ('Accountant', 'finance-dashboard'),
     ('HR Admin', 'attendance-leaves'),
-    ('Viewer', 'finance-dashboard'),
     ('Employee', 'employee-details'),
     ('Student/Parent', 'student-portal'),
 ]

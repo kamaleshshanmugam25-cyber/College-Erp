@@ -272,17 +272,17 @@ def login_api(request):
                 user.groups.add(grp)
                 UserProfile.objects.get_or_create(user=user, defaults={"department": "Accounts & Ledger", "staff_id": "ACC001"})
         elif demo_role in (Roles.FEE_MANAGER, "Fee Manager"):
-            user = User.objects.filter(groups__name=Roles.FEE_MANAGER).first()
+            user = User.objects.filter(groups__name=Roles.FEE_MANAGER).first() or User.objects.filter(username="feemanager").first()
             if not user:
                 user = User.objects.create_user(username="feemanager", email="feemanager@apex.edu", password="password123", first_name="Sanjay", last_name="Verma")
-                grp, _ = Group.objects.get_or_create(name=Roles.FEE_MANAGER)
+                grp, _ = Group.objects.get_or_create(name=Roles.FINANCE_USER)
                 user.groups.add(grp)
                 UserProfile.objects.get_or_create(user=user, defaults={"department": "Fee Collections & Waivers", "staff_id": "FEE001"})
         elif demo_role in (Roles.VIEWER, "Viewer"):
-            user = User.objects.filter(groups__name=Roles.VIEWER).first()
+            user = User.objects.filter(groups__name=Roles.VIEWER).first() or User.objects.filter(username="viewer").first()
             if not user:
                 user = User.objects.create_user(username="viewer", email="viewer@apex.edu", password="password123", first_name="Ananya", last_name="Iyer")
-                grp, _ = Group.objects.get_or_create(name=Roles.VIEWER)
+                grp, _ = Group.objects.get_or_create(name=Roles.FINANCE_USER)
                 user.groups.add(grp)
                 UserProfile.objects.get_or_create(user=user, defaults={"department": "Institutional Oversight", "staff_id": "VIW001"})
         elif demo_role in (Roles.HR_ADMIN, "HR Admin"):

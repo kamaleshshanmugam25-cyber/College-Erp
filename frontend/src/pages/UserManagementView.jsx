@@ -42,12 +42,26 @@ const FINANCE_MODULES = [
 ];
 
 const AVAILABLE_ROLES = [
-  { id: 'Finance Admin', label: 'Finance Admin', description: 'Full financial authority, user management & access control', badgeClass: 'bg-blue-100 text-blue-800 border-blue-200' },
-  { id: 'Finance User', label: 'Finance User', description: 'Desk fee structures, student dues & accounts inquiry', badgeClass: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
-  { id: 'Accountant', label: 'Accountant', description: 'Fee payments, collections, ledger entries & transactions', badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
-  { id: 'HR Admin', label: 'HR / Staff', description: 'Staff directory, attendance approvals & payroll records', badgeClass: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
-  { id: 'Viewer', label: 'Viewer', description: 'Read-only access to authorized finance reports & statements', badgeClass: 'bg-slate-100 text-slate-700 border-slate-300' },
   { id: 'Super Admin', label: 'Super Admin', description: 'Root institutional system administrator', badgeClass: 'bg-purple-100 text-purple-800 border-purple-200' },
+  { id: 'Finance Admin', label: 'Finance Admin', description: 'Full financial authority, user management & access control', badgeClass: 'bg-blue-100 text-blue-800 border-blue-200' },
+  { id: 'Accountant', label: 'Accountant', description: 'Fee payments, collections, ledger entries & transactions', badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+  { id: 'Finance User', label: 'Finance User', description: 'Desk fee structures, student dues & accounts inquiry', badgeClass: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
+  { id: 'HR Admin', label: 'HR / Staff', description: 'Staff directory, attendance approvals & payroll records', badgeClass: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+  { id: 'Employee', label: 'Employee', description: 'Employee self-service attendance, leaves & payslips', badgeClass: 'bg-teal-100 text-teal-800 border-teal-200' },
+  { id: 'Student/Parent', label: 'Student / Parent', description: 'Tuition fees, dues, payment receipts & calendar', badgeClass: 'bg-sky-100 text-sky-800 border-sky-200' },
+];
+
+// Roles strictly assignable by Finance Admin (Only Finance User and Accountant)
+const ASSIGNABLE_ROLES = [
+  { id: 'Finance User', label: 'Finance User', description: 'Desk fee structures, calculator & accounts inquiry', badgeClass: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
+  { id: 'Accountant', label: 'Accountant', description: 'Fee payments, transactions, vouchers & ledger accounting', badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+];
+
+const FILTER_ROLES = [
+  { id: 'ALL', label: 'All Roles' },
+  { id: 'Finance User', label: 'Finance User' },
+  { id: 'Accountant', label: 'Accountant' },
+  { id: 'Finance Admin', label: 'Finance Admin' },
 ];
 
 const DEPARTMENTS = [
@@ -91,8 +105,8 @@ export function UserManagementView() {
     role: 'Finance User',
     password: '',
     is_active: true,
-    has_custom_permissions: false,
-    custom_modules: ['fee-structures'],
+    has_custom_permissions: true,
+    custom_modules: ['finance-dashboard', 'fee-structures'],
   });
   const [createError, setCreateError] = useState('');
   const [submittingCreate, setSubmittingCreate] = useState(false);
@@ -125,17 +139,25 @@ export function UserManagementView() {
   };
 
   const applyPresetModules = (preset) => {
-    if (preset === 'desk') {
-      setSelectedModules(['fee-structures']);
-      setHasCustomPermissions(true);
-    } else if (preset === 'desk_overview') {
-      setSelectedModules(['finance-dashboard', 'fee-structures']);
-      setHasCustomPermissions(true);
+    if (preset === 'default') {
+      if (selectedNewRole === 'Accountant') {
+        setSelectedModules(['finance-dashboard', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger', 'financial-reports']);
+      } else {
+        setSelectedModules(['finance-dashboard', 'fee-structures']);
+      }
     } else if (preset === 'all') {
       setSelectedModules(FINANCE_MODULES.map((m) => m.id));
-      setHasCustomPermissions(true);
     } else if (preset === 'clear') {
       setSelectedModules([]);
+    }
+  };
+
+  const handleSelectRoleInModal = (roleId) => {
+    setSelectedNewRole(roleId);
+    if (roleId === 'Accountant') {
+      setSelectedModules(['finance-dashboard', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger', 'financial-reports']);
+    } else {
+      setSelectedModules(['finance-dashboard', 'fee-structures']);
     }
   };
 
@@ -289,13 +311,18 @@ export function UserManagementView() {
   // Open Role Assignment Modal
   const openRoleChangeModal = (u) => {
     setRoleChangeUser(u);
-    setSelectedNewRole(u.role || 'Finance User');
-    setHasCustomPermissions(Boolean(u.has_custom_permissions));
-    setSelectedModules(
-      Array.isArray(u.custom_modules) && u.custom_modules.length > 0
-        ? [...u.custom_modules]
-        : (u.role === 'Finance User' ? ['fee-structures'] : ['fee-structures', 'invoices-receipts', 'finance-dashboard'])
-    );
+    const initialRole = (u.role === 'Accountant') ? 'Accountant' : 'Finance User';
+    setSelectedNewRole(initialRole);
+    setHasCustomPermissions(true);
+    if (Array.isArray(u.custom_modules) && u.custom_modules.length > 0) {
+      setSelectedModules([...u.custom_modules]);
+    } else {
+      if (initialRole === 'Accountant') {
+        setSelectedModules(['finance-dashboard', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger', 'financial-reports']);
+      } else {
+        setSelectedModules(['finance-dashboard', 'fee-structures']);
+      }
+    }
   };
 
   const getRoleBadge = (roleName) => {
@@ -397,9 +424,7 @@ export function UserManagementView() {
             <span className="px-2 py-0.5 rounded-md bg-cyan-50 text-cyan-700 font-bold text-[10px] border border-cyan-200">
               {stats?.role_counts?.['Finance User'] || 0} Fin User
             </span>
-            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10px] border border-slate-200">
-              {stats?.role_counts?.['Viewer'] || 0} Viewer
-            </span>
+
           </div>
         </div>
       </div>
@@ -423,8 +448,7 @@ export function UserManagementView() {
             onChange={(e) => setSelectedRole(e.target.value)}
             className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-700 font-medium focus:outline-none cursor-pointer"
           >
-            <option value="ALL">All Roles</option>
-            {AVAILABLE_ROLES.map((r) => (
+            {FILTER_ROLES.map((r) => (
               <option key={r.id} value={r.id}>{r.label}</option>
             ))}
           </select>
@@ -715,10 +739,16 @@ export function UserManagementView() {
                   <label className="text-xs font-bold text-slate-700 block mb-1">Assigned Role *</label>
                   <select
                     value={createForm.role}
-                    onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
+                    onChange={(e) => {
+                      const r = e.target.value;
+                      const defaultMods = (r === 'Accountant')
+                        ? ['finance-dashboard', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger', 'financial-reports']
+                        : ['finance-dashboard', 'fee-structures'];
+                      setCreateForm({ ...createForm, role: r, custom_modules: defaultMods });
+                    }}
                     className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 font-bold focus:outline-none cursor-pointer"
                   >
-                    {AVAILABLE_ROLES.map((r) => (
+                    {ASSIGNABLE_ROLES.map((r) => (
                       <option key={r.id} value={r.id}>{r.label}</option>
                     ))}
                   </select>
@@ -746,69 +776,78 @@ export function UserManagementView() {
                 </div>
               </div>
 
-              {/* Custom Modular Permissions for New User */}
+              {/* Tick Process for New User */}
               <div className="pt-2 border-t border-slate-100 space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
-                  <input
-                    type="checkbox"
-                    checked={createForm.has_custom_permissions}
-                    onChange={(e) => setCreateForm({ ...createForm, has_custom_permissions: e.target.checked })}
-                    className="rounded text-blue-600 focus:ring-blue-500"
-                  />
-                  <span>Assign explicit custom module permissions now</span>
-                  <span className="text-[10px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200">Optional</span>
-                </label>
-
-                {createForm.has_custom_permissions && (
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-slate-700">Select Modules to Grant:</span>
-                      <div className="flex items-center gap-1.5 text-[10px]">
-                        <button
-                          type="button"
-                          onClick={() => setCreateForm({ ...createForm, custom_modules: ['fee-structures'] })}
-                          className="px-2 py-0.5 rounded bg-white border border-slate-200 font-bold text-blue-600 hover:bg-blue-50 cursor-pointer"
-                        >
-                          ⚡ Fee Structures
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setCreateForm({ ...createForm, custom_modules: FINANCE_MODULES.map(m => m.id) })}
-                          className="px-2 py-0.5 rounded bg-white border border-slate-200 font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
-                        >
-                          All
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {FINANCE_MODULES.map((mod) => {
-                        const isChecked = createForm.custom_modules.includes(mod.id);
-                        return (
-                          <label
-                            key={mod.id}
-                            className={`p-2 rounded-lg border text-left cursor-pointer flex items-center gap-2 text-xs transition ${
-                              isChecked ? 'bg-white border-blue-500 font-bold text-slate-900 shadow-2xs' : 'bg-slate-100/60 border-slate-200 text-slate-500'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={(e) => {
-                                const newMods = e.target.checked
-                                  ? [...createForm.custom_modules, mod.id]
-                                  : createForm.custom_modules.filter(m => m !== mod.id);
-                                setCreateForm({ ...createForm, custom_modules: newMods });
-                              }}
-                              className="rounded text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="truncate">{mod.label}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <span>✓ Tick Process: Module Access Assignment</span>
+                    </label>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Tick modules to grant access immediately.</p>
                   </div>
-                )}
+                  <div className="flex items-center gap-1.5 text-[10px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const defaultMods = (createForm.role === 'Accountant')
+                          ? ['finance-dashboard', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger', 'financial-reports']
+                          : ['finance-dashboard', 'fee-structures'];
+                        setCreateForm({ ...createForm, custom_modules: defaultMods });
+                      }}
+                      className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold hover:bg-blue-100 cursor-pointer"
+                    >
+                      Role Defaults
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCreateForm({ ...createForm, custom_modules: FINANCE_MODULES.map(m => m.id) })}
+                      className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 cursor-pointer"
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCreateForm({ ...createForm, custom_modules: [] })}
+                      className="px-2 py-0.5 rounded bg-slate-100 text-slate-500 hover:text-red-600 cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-1.5">
+                  {FINANCE_MODULES.map((mod) => {
+                    const isChecked = createForm.custom_modules.includes(mod.id);
+                    return (
+                      <label
+                        key={mod.id}
+                        className={`p-2 rounded-xl border text-left cursor-pointer flex items-center justify-between gap-2 text-xs transition ${
+                          isChecked ? 'bg-blue-50/70 border-blue-500 font-bold text-slate-900 shadow-2xs' : 'bg-slate-50 border-slate-200 text-slate-500'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const newMods = e.target.checked
+                                ? [...createForm.custom_modules, mod.id]
+                                : createForm.custom_modules.filter(m => m !== mod.id);
+                              setCreateForm({ ...createForm, custom_modules: newMods });
+                            }}
+                            className="rounded text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="truncate">{mod.label}</span>
+                        </div>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded shrink-0 ${
+                          isChecked ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-500'
+                        }`}>
+                          {isChecked ? 'Ticked' : 'Unticked'}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="pt-2 flex items-center justify-between border-t border-slate-100">
@@ -876,34 +915,43 @@ export function UserManagementView() {
                 </div>
               </div>
 
-              {/* Step 1: Base Role Selection */}
+              {/* Step 1: Base Role Selection (Finance User vs Accountant only) */}
               <div>
                 <label className="text-xs font-bold text-slate-800 block mb-1.5 flex items-center justify-between">
-                  <span>1. Assigned Institutional Role</span>
-                  <span className="text-[10px] font-normal text-slate-400">Select base role</span>
+                  <span>1. Assigned Role</span>
+                  <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                    Finance Admin Authority
+                  </span>
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {AVAILABLE_ROLES.filter(r => r.id !== 'Super Admin').map((r) => {
+                <div className="grid grid-cols-2 gap-2.5">
+                  {ASSIGNABLE_ROLES.map((r) => {
                     const isSelected = selectedNewRole === r.id;
                     return (
                       <button
                         key={r.id}
                         type="button"
-                        onClick={() => setSelectedNewRole(r.id)}
-                        className={`p-2.5 rounded-xl border text-left cursor-pointer transition flex items-center justify-between ${
+                        onClick={() => handleSelectRoleInModal(r.id)}
+                        className={`p-3 rounded-2xl border text-left cursor-pointer transition flex items-start justify-between ${
                           isSelected
-                            ? 'border-blue-600 bg-blue-50/80 ring-1 ring-blue-500 shadow-2xs'
+                            ? 'border-blue-600 bg-blue-50/80 ring-2 ring-blue-500 shadow-xs'
                             : 'border-slate-200 hover:bg-slate-50 hover:border-slate-300'
                         }`}
                       >
                         <div className="min-w-0 pr-1">
-                          <div className="font-bold text-xs text-slate-900 truncate">{r.label}</div>
-                          <div className="text-[10px] text-slate-500 truncate">{r.id}</div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-xs text-slate-900">{r.label}</span>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${r.badgeClass}`}>
+                              {r.id === 'Finance User' ? 'Front-Desk' : 'Accounting'}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 mt-1 line-clamp-2">{r.description}</div>
                         </div>
                         {isSelected ? (
-                          <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                          <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          </div>
                         ) : (
-                          <div className="w-3.5 h-3.5 rounded-full border border-slate-300 shrink-0" />
+                          <div className="w-4 h-4 rounded-full border border-slate-300 shrink-0 mt-0.5" />
                         )}
                       </button>
                     );
@@ -911,123 +959,86 @@ export function UserManagementView() {
                 </div>
               </div>
 
-              {/* Step 2: Permission Assignment Policy */}
-              <div className="pt-2 border-t border-slate-100">
-                <label className="text-xs font-bold text-slate-800 block mb-2">
-                  <span>2. Modular Access Policy</span>
-                </label>
+              {/* Step 2: Tick Process: Modular Access Assignment */}
+              <div className="pt-3 border-t border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-black">2</span>
+                      <span>Tick Process: Modular Access Assignment</span>
+                      <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                        {selectedModules.length} of {FINANCE_MODULES.length} Ticked
+                      </span>
+                    </label>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Tick the boxes to declare access. If unticked, the module will NOT appear in the user's sidebar.
+                    </p>
+                  </div>
 
-                {/* Mode Selector */}
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  <button
-                    type="button"
-                    onClick={() => setHasCustomPermissions(false)}
-                    className={`p-3 rounded-xl border text-left cursor-pointer transition ${
-                      !hasCustomPermissions
-                        ? 'border-blue-600 bg-blue-50/70 ring-1 ring-blue-500'
-                        : 'border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="font-bold text-xs text-slate-900">Standard Role Policy</div>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Inherits access from Role & Permissions matrix</p>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setHasCustomPermissions(true);
-                      if (selectedModules.length === 0) {
-                        setSelectedModules(['fee-structures']);
-                      }
-                    }}
-                    className={`p-3 rounded-xl border text-left cursor-pointer transition ${
-                      hasCustomPermissions
-                        ? 'border-blue-600 bg-blue-50/70 ring-1 ring-blue-500'
-                        : 'border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
-                      <span>Custom Module Assignment</span>
-                      <span className="text-[9px] bg-amber-100 text-amber-800 px-1 py-0.2 rounded font-bold">Explicit</span>
-                    </div>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Explicitly assign fee structures, invoices, etc.</p>
-                  </button>
+                  {/* Presets */}
+                  <div className="flex items-center gap-1 text-[10px] shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => applyPresetModules('default')}
+                      className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold border border-blue-200 cursor-pointer transition shadow-2xs"
+                    >
+                      ⚡ Role Defaults
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPresetModules('all')}
+                      className="px-2 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 cursor-pointer transition"
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyPresetModules('clear')}
+                      className="px-2 py-1 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 cursor-pointer transition"
+                    >
+                      Clear
+                    </button>
+                  </div>
                 </div>
 
-                {/* If Custom Module Assignment is selected */}
-                {hasCustomPermissions && (
-                  <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-3 animate-in fade-in duration-150">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-[11px] font-bold text-slate-700">
-                        Assigned Modules ({selectedModules.length} selected):
-                      </span>
-                      {/* Presets */}
-                      <div className="flex items-center gap-1.5 text-[10px]">
-                        <button
-                          type="button"
-                          onClick={() => applyPresetModules('desk')}
-                          className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-blue-700 font-bold hover:bg-blue-50 cursor-pointer"
-                        >
-                          ⚡ Fees & Invoices
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyPresetModules('desk_overview')}
-                          className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-cyan-700 font-bold hover:bg-cyan-50 cursor-pointer"
-                        >
-                          ⚡ Front-Desk Suite
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyPresetModules('all')}
-                          className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-600 font-semibold hover:bg-slate-100 cursor-pointer"
-                        >
-                          All
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyPresetModules('clear')}
-                          className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-600 cursor-pointer"
-                        >
-                          Clear
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {FINANCE_MODULES.map((mod) => {
-                        const isChecked = selectedModules.includes(mod.id);
-                        return (
-                          <div
-                            key={mod.id}
-                            onClick={() => toggleModuleSelection(mod.id)}
-                            className={`p-2.5 rounded-xl border text-left cursor-pointer transition flex items-start gap-2.5 ${
-                              isChecked
-                                ? 'bg-white border-blue-500 shadow-2xs text-slate-900'
-                                : 'bg-slate-100/50 border-slate-200 text-slate-500 hover:bg-white hover:border-slate-300'
-                            }`}
-                          >
-                            <div className="pt-0.5 shrink-0">
-                              {isChecked ? (
-                                <CheckSquare className="w-4 h-4 text-blue-600" />
-                              ) : (
-                                <Square className="w-4 h-4 text-slate-400" />
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-xs font-bold leading-tight">
-                                {mod.label}
-                              </div>
-                              <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
-                                {mod.desc}
-                              </div>
-                            </div>
+                {/* The Module Checklist with visual tick boxes */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {FINANCE_MODULES.map((mod) => {
+                    const isChecked = selectedModules.includes(mod.id);
+                    return (
+                      <div
+                        key={mod.id}
+                        onClick={() => toggleModuleSelection(mod.id)}
+                        className={`p-3 rounded-2xl border text-left cursor-pointer transition flex items-start gap-2.5 ${
+                          isChecked
+                            ? 'bg-blue-50/70 border-blue-500 ring-1 ring-blue-500 shadow-2xs text-slate-900'
+                            : 'bg-slate-50/70 border-slate-200 text-slate-500 hover:bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="pt-0.5 shrink-0">
+                          {isChecked ? (
+                            <CheckSquare className="w-5 h-5 text-blue-600" />
+                          ) : (
+                            <Square className="w-5 h-5 text-slate-400" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-xs font-bold leading-tight truncate">{mod.label}</span>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded shrink-0 ${
+                              isChecked ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-500'
+                            }`}>
+                              {isChecked ? 'Ticked (Access Granted)' : 'Unticked (Hidden)'}
+                            </span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                          <div className="text-[10px] text-slate-500 mt-1 line-clamp-2">
+                            {mod.desc}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Action buttons */}
@@ -1126,7 +1137,7 @@ export function UserManagementView() {
                   onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
                   className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 font-bold focus:outline-none cursor-pointer"
                 >
-                  {AVAILABLE_ROLES.map((r) => (
+                  {ASSIGNABLE_ROLES.map((r) => (
                     <option key={r.id} value={r.id}>{r.label}</option>
                   ))}
                 </select>

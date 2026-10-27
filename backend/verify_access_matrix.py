@@ -80,6 +80,9 @@ assert 'fee-structures' in acc_mods2
 
 # 5. Verify Finance User default modules do NOT include invoices-receipts
 fu = User.objects.get(username='financeuser')
+if hasattr(fu, 'erp_profile'):
+    fu.erp_profile.has_custom_permissions = False
+    fu.erp_profile.save()
 fu_mods = get_accessible_modules_for_user(fu)
 print(f"[TEST 5 PASSED] Finance User accessible modules: {fu_mods}")
 assert 'invoices-receipts' not in fu_mods, "invoices-receipts should NOT be accessible by Finance User!"

@@ -223,6 +223,11 @@ def users_list_api(request):
         if role not in Roles.ALL:
             return JsonResponse({"error": f"Invalid role choice '{role}'"}, status=400)
 
+        # Finance Admin can only assign Finance User or Accountant
+        is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
+        if not is_super and role not in (Roles.FINANCE_USER, Roles.ACCOUNTANT):
+            return JsonResponse({"error": "Finance Admin can only assign 'Finance User' or 'Accountant' role."}, status=400)
+
         parts = full_name.split(maxsplit=1)
         first_name = parts[0] if parts else username
         last_name = parts[1] if len(parts) > 1 else ""
@@ -382,7 +387,13 @@ def user_detail_api(request, user_id):
                 target_user.save(update_fields=["email"])
 
             # Role change with self-lockout protection
-            if new_role and new_role in Roles.ALL:
+            if new_role is not None and new_role != "":
+                is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
+                if not is_super and new_role not in (Roles.FINANCE_USER, Roles.ACCOUNTANT):
+                    return JsonResponse({"error": "Finance Admin can only assign 'Finance User' or 'Accountant' role."}, status=400)
+                if new_role not in Roles.ALL:
+                    return JsonResponse({"error": f"Invalid role choice '{new_role}'"}, status=400)
+
                 current_primary = primary_role(target_user)
                 if is_self and new_role not in (Roles.SUPER_ADMIN, Roles.FINANCE_ADMIN):
                     return JsonResponse({
