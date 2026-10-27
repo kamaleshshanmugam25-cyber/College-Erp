@@ -34,6 +34,7 @@ function MainApp() {
   const [activeTab, setActiveTabState] = useState(() => getSavedTab() || 'finance-dashboard');
   const [lastUsername, setLastUsername] = useState(null);
 
+  const isSuper = hasRole('Super Admin');
   const isAdmin = hasRole('Super Admin', 'Finance Admin');
 
   const handleTabChange = (newTab) => {
