@@ -97,7 +97,7 @@ function MainApp() {
             const hrTabs = ['employee-lifecycle', 'attendance-leaves', 'holidays', 'performance-appraisal', 'payroll-processing'];
             if (!hrTabs.includes(targetTab)) targetTab = 'attendance-leaves';
           } else if (isFinance) {
-            const financeTabs = ['finance-dashboard', 'financial-reports', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger'];
+            const financeTabs = ['finance-dashboard', 'financial-reports', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger', 'user-management', 'finance-users'];
             if (!financeTabs.includes(targetTab)) targetTab = 'finance-dashboard';
           }
         }
@@ -161,6 +161,16 @@ function MainApp() {
         return <FinanceDashboard />;
       case 'user-management':
       case 'finance-users':
+        if (!isSuper && !isAdmin) {
+          return (
+            <AccessDeniedView
+              requiredRole="Finance Admin or Super Admin"
+              reason="Finance User & Role Management is restricted to Finance Admin."
+              onGoHome={() => handleTabChange('finance-dashboard')}
+            />
+          );
+        }
+        return <UserManagementView />;
       case 'role-permissions':
       case 'access-matrix':
         if (!isSuper) {
