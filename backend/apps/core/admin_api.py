@@ -122,7 +122,7 @@ def users_list_api(request):
         is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
         if not is_super:
             # Finance Admin can manage Finance team and any newly assigned institutional roles (excluding Super Admin, HR, Student, Employee)
-            qs = qs.exclude(is_superuser=True).exclude(groups__name__in=[Roles.SUPER_ADMIN, Roles.HR_ADMIN, Roles.EMPLOYEE, Roles.STUDENT_PARENT]).distinct()
+            qs = qs.exclude(is_superuser=True).exclude(groups__name__in=[Roles.SUPER_ADMIN, Roles.HR_ADMIN, Roles.EMPLOYEE, Roles.STUDENT_PARENT]).filter(student_profile__isnull=True, employee_profile__isnull=True).distinct()
 
         # Role filter
         role_filter = request.GET.get("role", "").strip()
@@ -149,7 +149,7 @@ def users_list_api(request):
 
         # Global stats (scoped to Finance Admin authority)
         if not is_super:
-            all_users = User.objects.exclude(is_superuser=True).exclude(groups__name__in=[Roles.SUPER_ADMIN, Roles.HR_ADMIN, Roles.EMPLOYEE, Roles.STUDENT_PARENT]).distinct()
+            all_users = User.objects.exclude(is_superuser=True).exclude(groups__name__in=[Roles.SUPER_ADMIN, Roles.HR_ADMIN, Roles.EMPLOYEE, Roles.STUDENT_PARENT]).filter(student_profile__isnull=True, employee_profile__isnull=True).distinct()
             total_count = all_users.count()
             active_count = all_users.filter(is_active=True).count()
             inactive_count = total_count - active_count

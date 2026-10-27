@@ -443,7 +443,7 @@ export function UserManagementView() {
       )}
 
       {/* KPI Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Registered Users</div>
           <div className="text-2xl font-bold text-slate-900 mt-1">{stats?.total_users || users.length}</div>
@@ -460,17 +460,6 @@ export function UserManagementView() {
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Inactive / Suspended</div>
           <div className="text-2xl font-bold text-rose-600 mt-1">{stats?.inactive_users || 0}</div>
           <div className="text-[11px] text-slate-500 mt-0.5">Access blocked server-side</div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Roles Breakdown</div>
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {stats?.role_counts && Object.entries(stats.role_counts).map(([rName, rCount]) => (
-              <span key={rName} className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 font-bold text-[10px] border border-blue-200">
-                {rCount} {rName}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
 
