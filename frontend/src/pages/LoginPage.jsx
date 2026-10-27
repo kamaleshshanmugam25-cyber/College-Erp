@@ -152,7 +152,7 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-10 sm:px-6 lg:px-8">
       {/* Brand Header */}
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-2">
+      <div className="sm:mx-auto sm:w-full sm:max-w-lg text-center space-y-2">
         <div className="w-12 h-12 rounded-2xl bg-blue-700 text-white flex items-center justify-center mx-auto shadow-md">
           {mode === 'register' ? (
             <UserPlus className="w-6 h-6" />
@@ -174,7 +174,7 @@ export function LoginPage() {
         </p>
       </div>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-lg px-4">
         <div className="bg-white py-8 px-6 sm:px-10 rounded-2xl border border-slate-200 shadow-sm space-y-5">
           {error && (
             <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center gap-2">
@@ -244,6 +244,52 @@ export function LoginPage() {
                 >
                   Create an account
                 </button>
+              </div>
+
+              {/* SYSTEM ACCESS CREDENTIALS REFERENCE TABLE */}
+              <div className="pt-4 border-t border-slate-100 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-800 uppercase tracking-wider">
+                    Institutional Login Credentials
+                  </span>
+                  <span className="text-[10px] text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                    Click any to Auto-Fill
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+                  {[
+                    { role: 'Finance Admin', user: 'finance', pass: 'password123', color: 'border-blue-200 bg-blue-50/50 hover:bg-blue-50' },
+                    { role: 'Finance User', user: 'financeuser', pass: 'password123', color: 'border-cyan-200 bg-cyan-50/50 hover:bg-cyan-50' },
+                    { role: 'Accountant', user: 'accountant', pass: 'password123', color: 'border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50' },
+                    { role: 'Super Admin', user: 'SuperAdmin', pass: 'password123', color: 'border-purple-200 bg-purple-50/50 hover:bg-purple-50' },
+                    { role: 'HR Admin', user: 'HrAdmin', pass: 'password123', color: 'border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50' },
+                    { role: 'Employee / Faculty', user: 'empl', pass: 'password123', color: 'border-teal-200 bg-teal-50/50 hover:bg-teal-50' },
+                    { role: 'Student / Parent', user: 'student', pass: 'password123', color: 'border-sky-200 bg-sky-50/50 hover:bg-sky-50' },
+                  ].map((acc) => (
+                    <button
+                      key={acc.user}
+                      type="button"
+                      onClick={() => {
+                        setUsername(acc.user);
+                        setPassword(acc.pass);
+                      }}
+                      className={`p-2.5 rounded-xl border transition text-left cursor-pointer group ${acc.color}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 text-xs">{acc.role}</span>
+                        <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider">
+                          Fill ⚡
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-600 font-mono mt-0.5">
+                        User: <strong className="text-slate-900">@{acc.user}</strong>
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-mono">
+                        Pass: <strong className="text-slate-700">{acc.pass}</strong>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </form>
           )}
