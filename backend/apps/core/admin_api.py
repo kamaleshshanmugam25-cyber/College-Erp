@@ -576,9 +576,7 @@ def permissions_matrix_api(request):
         target_roles = [
             Roles.FINANCE_ADMIN,
             Roles.ACCOUNTANT,
-            Roles.FEE_MANAGER,
             Roles.HR_ADMIN,
-            Roles.VIEWER,
             Roles.SUPER_ADMIN,
         ]
 

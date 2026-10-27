@@ -491,7 +491,6 @@ export function UserManagementView() {
                 <th className="py-3 px-4 w-12 text-center">ID</th>
                 <th className="py-3 px-4">User & Identity</th>
                 <th className="py-3 px-4">Assigned Role</th>
-                <th className="py-3 px-4">Direct Modular Access</th>
                 <th className="py-3 px-4 text-center">Account Status</th>
                 <th className="py-3 px-4">Last Login</th>
                 <th className="py-3 px-4 text-right">Actions</th>
@@ -500,7 +499,7 @@ export function UserManagementView() {
             <tbody className="divide-y divide-slate-100">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-400 text-xs">
+                  <td colSpan={6} className="py-8 text-center text-slate-400 text-xs">
                     No finance users found matching the search criteria.
                   </td>
                 </tr>
@@ -563,29 +562,7 @@ export function UserManagementView() {
                         </div>
                       </td>
 
-                      <td className="py-3 px-4">
-                        {isFinanceAdminUser ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
-                            <Shield className="w-3 h-3" />
-                            <span>All Modules (Full Authority)</span>
-                          </span>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
-                              {(u.custom_modules && u.custom_modules.length > 0)
-                                ? `${u.custom_modules.length} of 6 Modules Ticked`
-                                : (u.role === 'Accountant' ? '6 of 6 Modules (Role Default)' : '2 of 6 Modules (Role Default)')}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => openRoleChangeModal(u)}
-                              className="text-[10px] font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                            >
-                              Configure &rarr;
-                            </button>
-                          </div>
-                        )}
-                      </td>
+
 
                       <td className="py-3 px-4 text-center">
                         <button
@@ -829,7 +806,7 @@ export function UserManagementView() {
                         {createForm.custom_modules.length} of {FINANCE_MODULES.length} Ticked
                       </span>
                     </label>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Tick checkboxes to grant immediate sidebar access.</p>
+
                   </div>
                   <div className="flex items-center gap-1 text-[10px] shrink-0">
                     <button
@@ -1032,9 +1009,7 @@ export function UserManagementView() {
                         {selectedModules.length} of {FINANCE_MODULES.length} Ticked
                       </span>
                     </label>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Tick the boxes to declare access. If unticked, the module will NOT appear in the user's sidebar.
-                    </p>
+
                   </div>
 
                   {/* Presets */}

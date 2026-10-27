@@ -33,7 +33,7 @@ data = json.loads(res.content.decode('utf-8'))
 print(f"[TEST 1 PASSED] Total users in registry: {data['stats']['total_users']}")
 
 # Test 2: Finance Admin assigns 'Finance User' and 'Accountant' roles to target user
-target = User.objects.filter(username='viewer').first()
+target = User.objects.filter(username='feemanager').first() or User.objects.filter(groups__name=Roles.FINANCE_USER).first()
 assert target is not None, "Target user not found"
 
 # 2.1 Finance Admin assigns Accountant

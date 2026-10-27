@@ -64,7 +64,7 @@ function MainApp() {
     if (user.username !== lastUsername) {
       setLastUsername(user.username);
       const isSuper = hasRole('Super Admin');
-      const isFinance = isSuper || hasRole('Finance Admin', 'Finance User', 'Accountant', 'Viewer');
+      const isFinance = isSuper || hasRole('Finance Admin', 'Finance User', 'Accountant');
       const isHR = isSuper || hasRole('HR Admin');
       const isStudent = hasRole('Student/Parent');
       const isEmployee = hasRole('Employee');
@@ -139,7 +139,7 @@ function MainApp() {
       case 'student-scholarships':
         return <ScholarshipsView />;
       case 'general-ledger':
-        if (hasRole('Viewer') && !isAdmin && !hasRole('Accountant')) {
+        if (!isAdmin && !hasRole('Accountant')) {
           return (
             <AccessDeniedView
               requiredRole="Finance Admin or Accountant"

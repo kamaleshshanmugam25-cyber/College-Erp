@@ -147,7 +147,7 @@ class ReceiptPDFView(RoleRequiredMixin, View):
 
 @csrf_exempt
 def finance_dashboard_api(request):
-    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.ACCOUNTANT, Roles.FINANCE_USER, Roles.VIEWER):
+    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.ACCOUNTANT, Roles.FINANCE_USER):
         log_audit(
             request=request,
             action=AuditLog.Actions.ACCESS_DENIED,

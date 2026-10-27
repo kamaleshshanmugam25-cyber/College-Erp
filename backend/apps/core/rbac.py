@@ -10,7 +10,6 @@ class Roles:
     HR_ADMIN = "HR Admin"
     EMPLOYEE = "Employee"
     STUDENT_PARENT = "Student/Parent"
-    VIEWER = "Viewer"
 
     ALL = (
         SUPER_ADMIN,
@@ -20,7 +19,6 @@ class Roles:
         HR_ADMIN,
         EMPLOYEE,
         STUDENT_PARENT,
-        VIEWER,
     )
 
     FINANCE_ROLES = (
@@ -28,7 +26,6 @@ class Roles:
         FINANCE_ADMIN,
         FINANCE_USER,
         ACCOUNTANT,
-        VIEWER,
     )
 
 
@@ -44,7 +41,6 @@ ROLE_PERMISSIONS = {
                      "hr.add_leaveapplication", "hr.view_payroll"],
     Roles.STUDENT_PARENT: ["fees.view_studentfee", "fees.view_feeinstallment",
                            "fees.view_feereceipt"],
-    Roles.VIEWER: ["fees.view_studentfee", "fees.view_feereceipt", "ledger.view_generalledger"],
 }
 
 
@@ -85,8 +81,6 @@ def primary_role(user) -> str:
         return Roles.EMPLOYEE
     if Roles.STUDENT_PARENT in roles:
         return Roles.STUDENT_PARENT
-    if Roles.VIEWER in roles:
-        return Roles.VIEWER
     return list(roles)[0] if roles else "User"
 
 

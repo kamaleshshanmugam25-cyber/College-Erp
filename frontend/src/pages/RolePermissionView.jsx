@@ -24,7 +24,6 @@ const ROLES = [
   { id: 'Finance User', label: 'Finance User', badge: 'bg-cyan-100 text-cyan-800 border-cyan-200', desc: 'Desk fee structures and student inquiries' },
   { id: 'Accountant', label: 'Accountant', badge: 'bg-emerald-100 text-emerald-800 border-emerald-200', desc: 'Fee payments, collections, ledger entries, vouchers, and transactions' },
   { id: 'HR Admin', label: 'HR / Staff', badge: 'bg-indigo-100 text-indigo-800 border-indigo-200', desc: 'Staff lifecycle records, attendance, leave approvals, and payroll' },
-  { id: 'Viewer', label: 'Viewer', badge: 'bg-slate-100 text-slate-700 border-slate-300', desc: 'Read-only visibility into permitted financial summaries and reports' },
   { id: 'Super Admin', label: 'Super Admin', badge: 'bg-purple-100 text-purple-800 border-purple-200', desc: 'Root institutional system administrator (all permissions locked)' },
 ];
 

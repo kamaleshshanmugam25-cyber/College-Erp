@@ -186,7 +186,6 @@ export function AuditLogsView() {
             <option value="Accountant">Accountant</option>
             <option value="Finance User">Finance User</option>
             <option value="HR Admin">HR Admin</option>
-            <option value="Viewer">Viewer</option>
           </select>
 
           {(search || actionFilter !== 'ALL' || roleFilter !== 'ALL' || startDate || endDate) && (

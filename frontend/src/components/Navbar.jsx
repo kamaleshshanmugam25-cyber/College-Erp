@@ -65,16 +65,7 @@ const ROLES = [
     icon: Users,
     defaultTab: 'attendance-leaves',
   },
-  {
-    id: 'Viewer',
-    demoRole: 'Viewer',
-    label: 'Viewer',
-    description: 'Read-only financial summaries and institutional reports',
-    badgeClass: 'bg-slate-100 text-slate-700 border-slate-300',
-    iconColor: 'text-slate-600 bg-slate-50 border-slate-200',
-    icon: ShieldCheck,
-    defaultTab: 'finance-dashboard',
-  },
+
   {
     id: 'Employee',
     demoRole: 'Employee',
@@ -109,7 +100,6 @@ export function Navbar({ activeTab, setActiveTab }) {
     'Finance User': 'bg-cyan-100 text-cyan-800 border-cyan-200',
     'Accountant': 'bg-emerald-100 text-emerald-800 border-emerald-200',
     'HR Admin': 'bg-indigo-100 text-indigo-800 border-indigo-200',
-    'Viewer': 'bg-slate-100 text-slate-700 border-slate-300',
     'Employee': 'bg-teal-100 text-teal-800 border-teal-200',
     'Student/Parent': 'bg-sky-100 text-sky-800 border-sky-200',
     'Student / Parent': 'bg-sky-100 text-sky-800 border-sky-200',
@@ -123,7 +113,6 @@ export function Navbar({ activeTab, setActiveTab }) {
     if (user.roles?.includes('Finance User')) return 'Finance User';
     if (user.roles?.includes('Accountant')) return 'Accountant';
     if (user.roles?.includes('HR Admin')) return 'HR Admin';
-    if (user.roles?.includes('Viewer')) return 'Viewer';
     if (user.roles?.includes('Employee')) return 'Employee';
     if (user.roles?.includes('Student/Parent') || user.roles?.includes('Student / Parent')) return 'Student/Parent';
     return user.roles?.[0] || 'User';

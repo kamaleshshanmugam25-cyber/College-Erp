@@ -38,7 +38,6 @@ DEFAULT_ROLE_PERMISSIONS = {
     },
     Roles.FINANCE_USER: {
         "finance-dashboard": {"view": True, "create": False, "edit": False, "delete": False, "approve": False, "export": True},
-        "fee-structures": {"view": True, "create": False, "edit": False, "delete": False, "approve": False, "export": True},
         "invoices-receipts": {"view": False, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
         "scholarships": {"view": False, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
         "general-ledger": {"view": False, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
@@ -49,7 +48,6 @@ DEFAULT_ROLE_PERMISSIONS = {
     },
     Roles.ACCOUNTANT: {
         "finance-dashboard": {"view": True, "create": False, "edit": False, "delete": False, "approve": False, "export": True},
-        "fee-structures": {"view": True, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
         "invoices-receipts": {"view": True, "create": True, "edit": True, "delete": False, "approve": True, "export": True},
         "scholarships": {"view": True, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
         "general-ledger": {"view": True, "create": True, "edit": False, "delete": False, "approve": False, "export": True},
@@ -67,17 +65,6 @@ DEFAULT_ROLE_PERMISSIONS = {
         "fee-structures": {"view": False, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
         "invoices-receipts": {"view": False, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
         "general-ledger": {"view": False, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
-    },
-    Roles.VIEWER: {
-        "finance-dashboard": {"view": True, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
-        "fee-structures": {"view": True, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
-        "invoices-receipts": {"view": True, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
-        "scholarships": {"view": True, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
-        "financial-reports": {"view": True, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
-        "general-ledger": {"view": False, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
-        "user-management": {"view": False, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
-        "role-permissions": {"view": False, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
-        "audit-logs": {"view": False, "create": False, "edit": False, "delete": False, "approve": False, "export": False},
     },
 }
 

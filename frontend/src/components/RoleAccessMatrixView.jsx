@@ -307,8 +307,6 @@ export function RoleAccessMatrixView() {
 
                           : role === 'Finance User'
                           ? 'bg-cyan-100 text-cyan-800 border-cyan-200'
-                          : role === 'Viewer'
-                          ? 'bg-slate-100 text-slate-700 border-slate-300'
                           : role === 'HR Admin'
                           ? 'bg-indigo-100 text-indigo-800 border-indigo-200'
                           : role === 'Employee'
