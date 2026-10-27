@@ -64,16 +64,6 @@ const FILTER_ROLES = [
   { id: 'Finance Admin', label: 'Finance Admin' },
 ];
 
-const DEPARTMENTS = [
-  'Finance & Accounts',
-  'Tuition & Fee Collection',
-  'General Accounting & Audit',
-  'Financial Aid & Scholarships',
-  'Human Resources & Payroll',
-  'Administration & Operations',
-  'Academic Affairs'
-];
-
 export function UserManagementView() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
@@ -435,7 +425,7 @@ export function UserManagementView() {
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search by full name, username, email, or department..."
+            placeholder="Search by full name, username, email, or staff ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -492,7 +482,6 @@ export function UserManagementView() {
                 <th className="py-3 px-4 w-12 text-center">ID</th>
                 <th className="py-3 px-4">User & Identity</th>
                 <th className="py-3 px-4">Assigned Role</th>
-                <th className="py-3 px-4">Department</th>
                 <th className="py-3 px-4 text-center">Account Status</th>
                 <th className="py-3 px-4">Last Login</th>
                 <th className="py-3 px-4 text-right">Actions</th>
@@ -501,7 +490,7 @@ export function UserManagementView() {
             <tbody className="divide-y divide-slate-100">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-400 text-xs">
+                  <td colSpan={6} className="py-8 text-center text-slate-400 text-xs">
                     No users found matching the search criteria.
                   </td>
                 </tr>
@@ -528,10 +517,16 @@ export function UserManagementView() {
                                 </span>
                               )}
                             </div>
-                            <div className="text-[11px] text-slate-500 font-mono flex items-center gap-2 mt-0.5">
+                            <div className="text-[11px] text-slate-500 font-mono flex items-center gap-2 mt-0.5 flex-wrap">
                               <span>@{u.username}</span>
                               <span>·</span>
                               <span className="text-slate-400">{u.email}</span>
+                              {u.staff_id && (
+                                <>
+                                  <span>·</span>
+                                  <span className="text-slate-600 font-semibold">ID: {u.staff_id}</span>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -557,12 +552,7 @@ export function UserManagementView() {
                         </div>
                       </td>
 
-                      <td className="py-3 px-4">
-                        <div className="text-slate-800 font-medium">{u.department}</div>
-                        {u.staff_id && (
-                          <div className="text-[10px] text-slate-400 font-mono">ID: {u.staff_id}</div>
-                        )}
-                      </td>
+
 
                       <td className="py-3 px-4 text-center">
                         <button
@@ -722,37 +712,23 @@ export function UserManagementView() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Department</label>
-                  <select
-                    value={createForm.department}
-                    onChange={(e) => setCreateForm({ ...createForm, department: e.target.value })}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 font-medium focus:outline-none cursor-pointer"
-                  >
-                    {DEPARTMENTS.map((d) => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Assigned Role *</label>
-                  <select
-                    value={createForm.role}
-                    onChange={(e) => {
-                      const r = e.target.value;
-                      const defaultMods = (r === 'Accountant')
-                        ? ['finance-dashboard', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger', 'financial-reports']
-                        : ['finance-dashboard', 'fee-structures'];
-                      setCreateForm({ ...createForm, role: r, custom_modules: defaultMods });
-                    }}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 font-bold focus:outline-none cursor-pointer"
-                  >
-                    {ASSIGNABLE_ROLES.map((r) => (
-                      <option key={r.id} value={r.id}>{r.label}</option>
-                    ))}
-                  </select>
-                </div>
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Assigned Role *</label>
+                <select
+                  value={createForm.role}
+                  onChange={(e) => {
+                    const r = e.target.value;
+                    const defaultMods = (r === 'Accountant')
+                      ? ['finance-dashboard', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger', 'financial-reports']
+                      : ['finance-dashboard', 'fee-structures'];
+                    setCreateForm({ ...createForm, role: r, custom_modules: defaultMods });
+                  }}
+                  className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 font-bold focus:outline-none cursor-pointer"
+                >
+                  {ASSIGNABLE_ROLES.map((r) => (
+                    <option key={r.id} value={r.id}>{r.label}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -1108,18 +1084,6 @@ export function UserManagementView() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Department</label>
-                  <select
-                    value={editForm.department}
-                    onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 font-medium focus:outline-none cursor-pointer"
-                  >
-                    {DEPARTMENTS.map((d) => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">Staff ID</label>
                   <input
                     type="text"
@@ -1128,19 +1092,18 @@ export function UserManagementView() {
                     className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Role</label>
-                <select
-                  value={editForm.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                  className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 font-bold focus:outline-none cursor-pointer"
-                >
-                  {ASSIGNABLE_ROLES.map((r) => (
-                    <option key={r.id} value={r.id}>{r.label}</option>
-                  ))}
-                </select>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Role</label>
+                  <select
+                    value={editForm.role}
+                    onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 font-bold focus:outline-none cursor-pointer"
+                  >
+                    {ASSIGNABLE_ROLES.map((r) => (
+                      <option key={r.id} value={r.id}>{r.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="pt-2 flex items-center justify-between border-t border-slate-100">
