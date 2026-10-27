@@ -66,16 +66,16 @@ if hasattr(target, '_erp_roles'):
 print(f"[TEST 2.1 PASSED] Finance Admin assigned '{Roles.FINANCE_USER}' to @{target.username}")
 assert primary_role(target) == Roles.FINANCE_USER
 
-# 2.3 Finance Admin is BLOCKED from assigning Viewer or other unauthorized roles (400 Bad Request)
+# 2.3 Finance Admin is BLOCKED from assigning Super Admin or other unauthorized roles (400 Bad Request)
 patch_block = rf.patch(
     f'/api/admin/users/{target.id}/',
-    data=json.dumps({'role': 'Viewer'}),
+    data=json.dumps({'role': Roles.SUPER_ADMIN}),
     content_type='application/json'
 )
 patch_block.user = fa
 res_block = user_detail_api(patch_block, target.id)
-assert res_block.status_code == 400, f"Expected 400 when assigning Viewer, got {res_block.status_code}"
-print("[TEST 2.2 PASSED] Finance Admin blocked from assigning unauthorized role 'Viewer' (400 Bad Request)")
+assert res_block.status_code == 400, f"Expected 400 when assigning Super Admin, got {res_block.status_code}"
+print("[TEST 2.2 PASSED] Finance Admin blocked from assigning unauthorized role Roles.SUPER_ADMIN (400 Bad Request)")
 
 # Test 3: Unauthorized user (Finance User) cannot access user management
 fu = User.objects.filter(username='financeuser').first()

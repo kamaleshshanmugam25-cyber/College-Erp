@@ -28,7 +28,8 @@ import {
   Zap,
   CheckSquare,
   Square,
-  SlidersHorizontal
+  SlidersHorizontal,
+  PlusCircle
 } from 'lucide-react';
 
 const FINANCE_MODULES = [
@@ -46,14 +47,16 @@ const AVAILABLE_ROLES = [
   { id: 'Finance User', label: 'Finance User', description: 'Desk fee structures, student dues & accounts inquiry', badgeClass: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
 ];
 
-// Roles strictly assignable & creatable by Finance Admin (Finance User and Accountant only)
+// Roles assignable by Admin (Standard roles + Option to assign a new role)
 const ASSIGNABLE_ROLES = [
   { id: 'Finance User', label: 'Finance User', description: 'Desk fee structures, student dues & calculator inquiry', badgeClass: 'bg-cyan-100 text-cyan-800 border-cyan-200', tag: 'Front-Desk' },
   { id: 'Accountant', label: 'Accountant', description: 'Fee payments, transactions, vouchers & ledger accounting', badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200', tag: 'Accounting' },
+  { id: 'Finance Admin', label: 'Finance Admin', description: 'Institutional finance administration & access control', badgeClass: 'bg-blue-100 text-blue-800 border-blue-200', tag: 'Admin Authority' },
+  { id: 'CUSTOM', label: '+ Assign New Role', description: 'Specify a custom institutional role title and assign module access', badgeClass: 'bg-violet-100 text-violet-800 border-violet-200', tag: 'New Role' },
 ];
 
 const FILTER_ROLES = [
-  { id: 'ALL', label: 'All Finance Roles' },
+  { id: 'ALL', label: 'All Roles' },
   { id: 'Finance User', label: 'Finance User' },
   { id: 'Accountant', label: 'Accountant' },
   { id: 'Finance Admin', label: 'Finance Admin' },
@@ -92,6 +95,8 @@ export function UserManagementView() {
     has_custom_permissions: true,
     custom_modules: ['finance-dashboard', 'fee-structures'],
   });
+  const [createCustomRole, setCreateCustomRole] = useState(false);
+  const [createCustomRoleText, setCreateCustomRoleText] = useState('');
   const [createError, setCreateError] = useState('');
   const [submittingCreate, setSubmittingCreate] = useState(false);
 
@@ -112,6 +117,8 @@ export function UserManagementView() {
 
   // Role change state
   const [selectedNewRole, setSelectedNewRole] = useState('Finance User');
+  const [editCustomRole, setEditCustomRole] = useState(false);
+  const [editCustomRoleText, setEditCustomRoleText] = useState('');
   const [selectedModules, setSelectedModules] = useState([]);
   const [submittingRoleChange, setSubmittingRoleChange] = useState(false);
 
@@ -123,7 +130,7 @@ export function UserManagementView() {
 
   const applyPresetModules = (preset, role = selectedNewRole) => {
     if (preset === 'default') {
-      if (role === 'Accountant') {
+      if (role === 'Accountant' || role === 'Finance Admin') {
         setSelectedModules(['finance-dashboard', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger', 'financial-reports']);
       } else {
         setSelectedModules(['finance-dashboard', 'fee-structures']);
@@ -158,13 +165,9 @@ export function UserManagementView() {
       };
       const data = await api.getAdminUsers(params);
       if (data.success) {
-        // Enforce finance-team scoping in frontend as well
-        const financeOnly = (data.users || []).filter(u =>
-          ['Finance User', 'Accountant', 'Finance Admin'].includes(u.role)
-        );
-        setUsers(financeOnly);
+        setUsers(data.users || []);
         setStats(data.stats || null);
-        setPagination(data.pagination || { page: 1, page_size: 10, total_records: financeOnly.length, total_pages: 1 });
+        setPagination(data.pagination || { page: 1, page_size: 10, total_records: data.users?.length || 0, total_pages: 1 });
       }
     } catch (err) {
       setError(err.message || 'Failed to load user registry.');
@@ -183,9 +186,18 @@ export function UserManagementView() {
     setCreateError('');
     setSubmittingCreate(true);
     try {
-      const res = await api.createAdminUser(createForm);
-      notify(res.message || 'Finance user successfully created!');
+      const finalRole = createCustomRole ? createCustomRoleText.trim() : createForm.role;
+      if (!finalRole) {
+        throw new Error('Please specify a role name.');
+      }
+      const res = await api.createAdminUser({
+        ...createForm,
+        role: finalRole,
+      });
+      notify(res.message || 'User successfully created!');
       setShowCreateModal(false);
+      setCreateCustomRole(false);
+      setCreateCustomRoleText('');
       setCreateForm({
         username: '',
         name: '',
@@ -200,7 +212,7 @@ export function UserManagementView() {
       });
       loadUsers(1);
     } catch (err) {
-      setCreateError(err.message || 'Failed to create finance user account.');
+      setCreateError(err.message || 'Failed to create user account.');
     } finally {
       setSubmittingCreate(false);
     }
@@ -215,7 +227,7 @@ export function UserManagementView() {
     const newStatus = !user.is_active;
     const confirmMsg = newStatus
       ? `Are you sure you want to activate @${user.username}?`
-      : `Are you sure you want to suspend @${user.username}? They will be blocked from logging into the finance portal.`;
+      : `Are you sure you want to suspend @${user.username}? They will be blocked from logging into the portal.`;
 
     if (!window.confirm(confirmMsg)) return;
 
@@ -234,13 +246,19 @@ export function UserManagementView() {
     if (!roleChangeUser) return;
     setSubmittingRoleChange(true);
     try {
+      const finalRole = editCustomRole ? editCustomRoleText.trim() : selectedNewRole;
+      if (!finalRole) {
+        throw new Error('Please specify an assigned role or role title.');
+      }
       await api.updateAdminUser(roleChangeUser.id, {
-        role: selectedNewRole,
+        role: finalRole,
         has_custom_permissions: true,
         custom_modules: selectedModules,
       });
-      notify(`Role for @${roleChangeUser.username} updated to ${selectedNewRole} with ${selectedModules.length} modular access permission(s).`);
+      notify(`Role for @${roleChangeUser.username} updated to ${finalRole} with ${selectedModules.length} modular access permission(s).`);
       setRoleChangeUser(null);
+      setEditCustomRole(false);
+      setEditCustomRoleText('');
       loadUsers(pagination.page);
     } catch (err) {
       alert(`Role assignment failed: ${err.message}`);
@@ -308,23 +326,37 @@ export function UserManagementView() {
 
   // Open Role Assignment Modal
   const openRoleChangeModal = (u) => {
-    if (u.role === 'Finance Admin' || u.role === 'Super Admin') {
-      alert("Finance Admin can only assign roles to Finance User and Accountant accounts.");
+    if (u.role === 'Super Admin') {
+      alert("Finance Admin cannot modify Super Admin accounts.");
       return;
     }
     setRoleChangeUser(u);
-    const initialRole = (u.role === 'Accountant') ? 'Accountant' : 'Finance User';
-    setSelectedNewRole(initialRole);
+    const knownRole = ['Finance User', 'Accountant', 'Finance Admin'].includes(u.role);
+    if (knownRole) {
+      setSelectedNewRole(u.role);
+      setEditCustomRole(false);
+      setEditCustomRoleText('');
+    } else {
+      setSelectedNewRole('CUSTOM');
+      setEditCustomRole(true);
+      setEditCustomRoleText(u.role || '');
+    }
     if (Array.isArray(u.custom_modules) && u.custom_modules.length > 0) {
       setSelectedModules([...u.custom_modules]);
     } else {
-      applyPresetModules('default', initialRole);
+      applyPresetModules('default', u.role);
     }
   };
 
   const getRoleBadge = (roleName) => {
     const roleObj = AVAILABLE_ROLES.find(r => r.id === roleName);
-    const cls = roleObj ? roleObj.badgeClass : 'bg-slate-100 text-slate-700 border-slate-200';
+    let cls = 'bg-slate-100 text-slate-700 border-slate-200';
+    if (roleName === 'Finance Admin') cls = 'bg-blue-100 text-blue-800 border-blue-200';
+    else if (roleName === 'Accountant') cls = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    else if (roleName === 'Finance User') cls = 'bg-cyan-100 text-cyan-800 border-cyan-200';
+    else if (roleObj) cls = roleObj.badgeClass;
+    else cls = 'bg-violet-100 text-violet-800 border-violet-200';
+
     return (
       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${cls}`}>
         <ShieldCheck className="w-3 h-3 shrink-0" />
@@ -343,11 +375,11 @@ export function UserManagementView() {
               Finance User & Access Management
             </h1>
             <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              Finance Authority
+              Admin Authority
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Finance Admin control center to create institutional finance users, assign operational roles, and declare modular access.
+            Admin control center to create users, assign new roles, and declare modular access permissions.
           </p>
         </div>
 
@@ -368,7 +400,7 @@ export function UserManagementView() {
             className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Create Finance User</span>
+            <span>Create New User</span>
           </button>
         </div>
       </div>
@@ -389,18 +421,18 @@ export function UserManagementView() {
         </div>
       )}
 
-      {/* KPI Stats Cards - Scoped to Finance Team */}
+      {/* KPI Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Finance Team Accounts</div>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Registered Users</div>
           <div className="text-2xl font-bold text-slate-900 mt-1">{stats?.total_users || users.length}</div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Finance Users, Accountants & Admin</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Active institutional user accounts</div>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Accounts</div>
           <div className="text-2xl font-bold text-emerald-700 mt-1">{stats?.active_users || 0}</div>
-          <div className="text-[11px] text-emerald-600 font-semibold mt-0.5">Authorized for finance portal</div>
+          <div className="text-[11px] text-emerald-600 font-semibold mt-0.5">Authorized for system login</div>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
@@ -410,17 +442,13 @@ export function UserManagementView() {
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Finance Roles Breakdown</div>
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Roles Breakdown</div>
           <div className="flex flex-wrap gap-1.5 mt-2">
-            <span className="px-2 py-0.5 rounded-md bg-cyan-50 text-cyan-800 font-bold text-[10px] border border-cyan-200">
-              {stats?.role_counts?.['Finance User'] || 0} Finance User
-            </span>
-            <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-bold text-[10px] border border-emerald-200">
-              {stats?.role_counts?.['Accountant'] || 0} Accountant
-            </span>
-            <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 font-bold text-[10px] border border-blue-200">
-              {stats?.role_counts?.['Finance Admin'] || 0} Admin
-            </span>
+            {stats?.role_counts && Object.entries(stats.role_counts).map(([rName, rCount]) => (
+              <span key={rName} className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 font-bold text-[10px] border border-blue-200">
+                {rCount} {rName}
+              </span>
+            ))}
           </div>
         </div>
       </div>
@@ -431,7 +459,7 @@ export function UserManagementView() {
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search finance users by name, username, email, staff ID..."
+            placeholder="Search by name, username, email, staff ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -476,7 +504,7 @@ export function UserManagementView() {
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-blue-600" />
             <span className="font-bold text-sm text-slate-900">
-              Finance Team Registry ({pagination.total_records || users.length})
+              Institutional Users Registry ({pagination.total_records || users.length})
             </span>
           </div>
           <span className="text-xs text-slate-400">
@@ -491,6 +519,7 @@ export function UserManagementView() {
                 <th className="py-3 px-4 w-12 text-center">ID</th>
                 <th className="py-3 px-4">User & Identity</th>
                 <th className="py-3 px-4">Assigned Role</th>
+                <th className="py-3 px-4 text-center">Assign Role & Access</th>
                 <th className="py-3 px-4 text-center">Account Status</th>
                 <th className="py-3 px-4">Last Login</th>
                 <th className="py-3 px-4 text-right">Actions</th>
@@ -499,14 +528,13 @@ export function UserManagementView() {
             <tbody className="divide-y divide-slate-100">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400 text-xs">
-                    No finance users found matching the search criteria.
+                  <td colSpan={7} className="py-8 text-center text-slate-400 text-xs">
+                    No users found matching the search criteria.
                   </td>
                 </tr>
               ) : (
                 users.map((u) => {
                   const isCurrent = currentUser?.id === u.id;
-                  const isFinanceAdminUser = u.role === 'Finance Admin';
                   return (
                     <tr key={u.id} className="hover:bg-slate-50/70 transition">
                       <td className="py-3 px-4 text-center text-slate-400 font-mono text-[11px]">
@@ -542,27 +570,25 @@ export function UserManagementView() {
                         </div>
                       </td>
 
+                      {/* ASSIGNED ROLE Column */}
                       <td className="py-3 px-4">
-                        <div className="flex flex-col gap-1 items-start">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            {getRoleBadge(u.role)}
-                          </div>
-                          {!isFinanceAdminUser ? (
-                            <button
-                              type="button"
-                              onClick={() => openRoleChangeModal(u)}
-                              className="text-[10px] text-blue-600 hover:text-blue-800 hover:underline font-bold cursor-pointer inline-flex items-center gap-1 mt-0.5"
-                            >
-                              <span>Assign Role & Access</span>
-                              <span>&rarr;</span>
-                            </button>
-                          ) : (
-                            <span className="text-[10px] text-slate-400 font-medium italic mt-0.5">Primary Administrator</span>
-                          )}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {getRoleBadge(u.role)}
                         </div>
                       </td>
 
-
+                      {/* SEPARATE COLUMN: ASSIGN ROLE & ACCESS */}
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          type="button"
+                          onClick={() => openRoleChangeModal(u)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200 transition shadow-2xs cursor-pointer hover:shadow-xs"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span>Assign Role & Access</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
 
                       <td className="py-3 px-4 text-center">
                         <button
@@ -617,7 +643,7 @@ export function UserManagementView() {
         {pagination.total_pages > 1 && (
           <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
             <div>
-              Total <span className="font-bold text-slate-800">{pagination.total_records}</span> registered finance users
+              Total <span className="font-bold text-slate-800">{pagination.total_records}</span> registered users
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -644,7 +670,7 @@ export function UserManagementView() {
         )}
       </div>
 
-      {/* CREATE NEW FINANCE USER MODAL */}
+      {/* CREATE NEW USER MODAL */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-hidden my-8">
@@ -654,8 +680,8 @@ export function UserManagementView() {
                   <UserPlus className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Create New Finance User</h3>
-                  <p className="text-[11px] text-slate-500">Register a Finance User or Accountant with direct modular access</p>
+                  <h3 className="text-sm font-bold text-slate-900">Create New User</h3>
+                  <p className="text-[11px] text-slate-500">Register a new user, assign a role, and configure modular access</p>
                 </div>
               </div>
               <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
@@ -725,21 +751,26 @@ export function UserManagementView() {
                 <label className="text-xs font-bold text-slate-800 block mb-1.5 flex items-center justify-between">
                   <span>1. Assigned Role</span>
                   <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                    Finance Admin Authority
+                    Admin Authority
                   </span>
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {ASSIGNABLE_ROLES.map((r) => {
-                    const isSelected = createForm.role === r.id;
+                    const isSelected = r.id === 'CUSTOM' ? createCustomRole : (!createCustomRole && createForm.role === r.id);
                     return (
                       <button
                         key={r.id}
                         type="button"
                         onClick={() => {
-                          const defaultMods = (r.id === 'Accountant')
-                            ? ['finance-dashboard', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger', 'financial-reports']
-                            : ['finance-dashboard', 'fee-structures'];
-                          setCreateForm({ ...createForm, role: r.id, custom_modules: defaultMods });
+                          if (r.id === 'CUSTOM') {
+                            setCreateCustomRole(true);
+                          } else {
+                            setCreateCustomRole(false);
+                            const defaultMods = (r.id === 'Accountant' || r.id === 'Finance Admin')
+                              ? ['finance-dashboard', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger', 'financial-reports']
+                              : ['finance-dashboard', 'fee-structures'];
+                            setCreateForm({ ...createForm, role: r.id, custom_modules: defaultMods });
+                          }
                         }}
                         className={`p-3 rounded-2xl border text-left cursor-pointer transition flex items-start justify-between ${
                           isSelected
@@ -750,9 +781,7 @@ export function UserManagementView() {
                         <div className="min-w-0 pr-1">
                           <div className="flex items-center gap-1.5">
                             <span className="font-bold text-xs text-slate-900">{r.label}</span>
-                            <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${
-                              r.id === 'Finance User' ? 'bg-cyan-50 text-cyan-800 border-cyan-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                            }`}>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${r.badgeClass}`}>
                               {r.tag}
                             </span>
                           </div>
@@ -771,6 +800,22 @@ export function UserManagementView() {
                     );
                   })}
                 </div>
+
+                {createCustomRole && (
+                  <div className="mt-2.5 p-3 bg-violet-50/80 border border-violet-200 rounded-2xl animate-in fade-in">
+                    <label className="text-xs font-bold text-violet-900 block mb-1">
+                      Specify New Role Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Billing Specialist, Fee Clerk, Internal Auditor"
+                      value={createCustomRoleText}
+                      onChange={(e) => setCreateCustomRoleText(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-violet-300 rounded-xl text-xs bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Password */}
@@ -806,13 +851,12 @@ export function UserManagementView() {
                         {createForm.custom_modules.length} of {FINANCE_MODULES.length} Ticked
                       </span>
                     </label>
-
                   </div>
                   <div className="flex items-center gap-1 text-[10px] shrink-0">
                     <button
                       type="button"
                       onClick={() => {
-                        const defaultMods = (createForm.role === 'Accountant')
+                        const defaultMods = (createForm.role === 'Accountant' || createForm.role === 'Finance Admin')
                           ? ['finance-dashboard', 'fee-structures', 'invoices-receipts', 'scholarships', 'general-ledger', 'financial-reports']
                           : ['finance-dashboard', 'fee-structures'];
                         setCreateForm({ ...createForm, custom_modules: defaultMods });
@@ -857,7 +901,7 @@ export function UserManagementView() {
                         <div className="pt-0.5 shrink-0">
                           {isChecked ? (
                             <div className="w-4 h-4 rounded bg-blue-600 text-white flex items-center justify-center shadow-xs">
-                              <Check className="w-3 h-3 stroke-[3]" />
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
                             </div>
                           ) : (
                             <div className="w-4 h-4 rounded border-2 border-slate-300 bg-white" />
@@ -904,7 +948,7 @@ export function UserManagementView() {
                     disabled={submittingCreate}
                     className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
                   >
-                    {submittingCreate ? 'Creating...' : 'Create Finance User'}
+                    {submittingCreate ? 'Creating...' : 'Create User'}
                   </button>
                 </div>
               </div>
@@ -924,7 +968,7 @@ export function UserManagementView() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Assign Role & Module Access</h3>
-                  <p className="text-[11px] text-slate-500">Configure operational role and modular permissions for @{roleChangeUser.username}</p>
+                  <p className="text-[11px] text-slate-500">Configure role and modular access permissions for @{roleChangeUser.username}</p>
                 </div>
               </div>
               <button onClick={() => setRoleChangeUser(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
@@ -950,22 +994,29 @@ export function UserManagementView() {
                 </div>
               </div>
 
-              {/* Step 1: Base Role Selection (Finance User vs Accountant only) */}
+              {/* Step 1: Base Role Selection (Standard Roles + Option to Assign a New Role) */}
               <div>
                 <label className="text-xs font-bold text-slate-800 block mb-1.5 flex items-center justify-between">
                   <span>1. Assigned Role</span>
                   <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                    Finance Admin Authority
+                    Admin Authority
                   </span>
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {ASSIGNABLE_ROLES.map((r) => {
-                    const isSelected = selectedNewRole === r.id;
+                    const isSelected = r.id === 'CUSTOM' ? editCustomRole : (!editCustomRole && selectedNewRole === r.id);
                     return (
                       <button
                         key={r.id}
                         type="button"
-                        onClick={() => handleSelectRoleInModal(r.id)}
+                        onClick={() => {
+                          if (r.id === 'CUSTOM') {
+                            setEditCustomRole(true);
+                          } else {
+                            setEditCustomRole(false);
+                            handleSelectRoleInModal(r.id);
+                          }
+                        }}
                         className={`p-3.5 rounded-2xl border text-left cursor-pointer transition flex items-start justify-between ${
                           isSelected
                             ? 'border-blue-600 bg-blue-50/90 ring-2 ring-blue-500 shadow-xs'
@@ -975,9 +1026,7 @@ export function UserManagementView() {
                         <div className="min-w-0 pr-2">
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-xs text-slate-900">{r.label}</span>
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
-                              r.id === 'Finance User' ? 'bg-cyan-50 text-cyan-800 border-cyan-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                            }`}>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${r.badgeClass}`}>
                               {r.tag}
                             </span>
                           </div>
@@ -996,6 +1045,22 @@ export function UserManagementView() {
                     );
                   })}
                 </div>
+
+                {editCustomRole && (
+                  <div className="mt-2.5 p-3 bg-violet-50/80 border border-violet-200 rounded-2xl animate-in fade-in">
+                    <label className="text-xs font-bold text-violet-900 block mb-1">
+                      Specify New Role Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Billing Specialist, Fee Clerk, Internal Auditor"
+                      value={editCustomRoleText}
+                      onChange={(e) => setEditCustomRoleText(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-violet-300 rounded-xl text-xs bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Step 2: Tick Process: Modular Access Assignment */}
@@ -1009,7 +1074,6 @@ export function UserManagementView() {
                         {selectedModules.length} of {FINANCE_MODULES.length} Ticked
                       </span>
                     </label>
-
                   </div>
 
                   {/* Presets */}
@@ -1152,19 +1216,12 @@ export function UserManagementView() {
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">Role *</label>
-                  <select
+                  <input
+                    type="text"
                     value={editForm.role}
-                    disabled={editForm.role === 'Finance Admin'}
                     onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 font-bold focus:outline-none cursor-pointer disabled:bg-slate-100 disabled:text-slate-500"
-                  >
-                    {editForm.role === 'Finance Admin' && (
-                      <option value="Finance Admin">Finance Admin</option>
-                    )}
-                    {ASSIGNABLE_ROLES.map((r) => (
-                      <option key={r.id} value={r.id}>{r.label}</option>
-                    ))}
-                  </select>
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 font-bold focus:outline-none"
+                  />
                 </div>
               </div>
 

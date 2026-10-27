@@ -121,9 +121,8 @@ def users_list_api(request):
 
         is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
         if not is_super:
-            # Finance Admin can ONLY view and manage Finance team members: Finance User, Accountant, and Finance Admin
-            finance_roles = [Roles.FINANCE_USER, Roles.ACCOUNTANT, Roles.FINANCE_ADMIN]
-            qs = qs.filter(groups__name__in=finance_roles).exclude(is_superuser=True).distinct()
+            # Finance Admin can manage Finance team and any newly assigned institutional roles (excluding Super Admin, HR, Student, Employee)
+            qs = qs.exclude(is_superuser=True).exclude(groups__name__in=[Roles.SUPER_ADMIN, Roles.HR_ADMIN, Roles.EMPLOYEE, Roles.STUDENT_PARENT]).distinct()
 
         # Role filter
         role_filter = request.GET.get("role", "").strip()
@@ -150,16 +149,14 @@ def users_list_api(request):
 
         # Global stats (scoped to Finance Admin authority)
         if not is_super:
-            finance_roles = [Roles.FINANCE_USER, Roles.ACCOUNTANT, Roles.FINANCE_ADMIN]
-            all_users = User.objects.filter(groups__name__in=finance_roles).exclude(is_superuser=True).distinct()
+            all_users = User.objects.exclude(is_superuser=True).exclude(groups__name__in=[Roles.SUPER_ADMIN, Roles.HR_ADMIN, Roles.EMPLOYEE, Roles.STUDENT_PARENT]).distinct()
             total_count = all_users.count()
             active_count = all_users.filter(is_active=True).count()
             inactive_count = total_count - active_count
-            role_counts = {
-                Roles.FINANCE_ADMIN: all_users.filter(groups__name=Roles.FINANCE_ADMIN).count(),
-                Roles.ACCOUNTANT: all_users.filter(groups__name=Roles.ACCOUNTANT).count(),
-                Roles.FINANCE_USER: all_users.filter(groups__name=Roles.FINANCE_USER).count(),
-            }
+            role_counts = {}
+            for u in all_users:
+                r = primary_role(u)
+                role_counts[r] = role_counts.get(r, 0) + 1
         else:
             all_users = User.objects.all()
             total_count = all_users.count()
@@ -237,13 +234,11 @@ def users_list_api(request):
         if len(password) < 4:
             return JsonResponse({"error": "Password must be at least 4 characters long"}, status=400)
 
-        if role not in Roles.ALL:
-            return JsonResponse({"error": f"Invalid role choice '{role}'"}, status=400)
-
-        # Finance Admin can only assign Finance User or Accountant
         is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
-        if not is_super and role not in (Roles.FINANCE_USER, Roles.ACCOUNTANT):
-            return JsonResponse({"error": "Finance Admin can only assign 'Finance User' or 'Accountant' role."}, status=400)
+        if not is_super and role == Roles.SUPER_ADMIN:
+            return JsonResponse({"error": "Finance Admin cannot assign Super Admin role."}, status=400)
+        if not role or len(role.strip()) < 2:
+            return JsonResponse({"error": "Role name must be at least 2 characters long."}, status=400)
 
         parts = full_name.split(maxsplit=1)
         first_name = parts[0] if parts else username
@@ -324,8 +319,8 @@ def user_detail_api(request, user_id):
     is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
     if not is_super:
         target_role = primary_role(target_user)
-        if target_user.is_superuser or target_role == Roles.SUPER_ADMIN or target_role not in (Roles.FINANCE_USER, Roles.ACCOUNTANT, Roles.FINANCE_ADMIN):
-            return JsonResponse({"error": "Access denied. Finance Admin can only manage Finance User and Accountant accounts."}, status=403)
+        if target_user.is_superuser or target_role in (Roles.SUPER_ADMIN, Roles.HR_ADMIN, Roles.EMPLOYEE, Roles.STUDENT_PARENT):
+            return JsonResponse({"error": "Access denied. Finance Admin cannot manage institutional administrators or non-finance employees."}, status=403)
 
     if request.method == "GET":
         recent_logs = AuditLog.objects.filter(
@@ -411,10 +406,10 @@ def user_detail_api(request, user_id):
             # Role change with self-lockout protection
             if new_role is not None and new_role != "":
                 is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
-                if not is_super and new_role not in (Roles.FINANCE_USER, Roles.ACCOUNTANT):
-                    return JsonResponse({"error": "Finance Admin can only assign 'Finance User' or 'Accountant' role."}, status=400)
-                if new_role not in Roles.ALL:
-                    return JsonResponse({"error": f"Invalid role choice '{new_role}'"}, status=400)
+                if not is_super and new_role == Roles.SUPER_ADMIN:
+                    return JsonResponse({"error": "Finance Admin cannot assign Super Admin role."}, status=400)
+                if not new_role or len(new_role.strip()) < 2:
+                    return JsonResponse({"error": "Role name must be at least 2 characters long."}, status=400)
 
                 current_primary = primary_role(target_user)
                 if is_self and new_role not in (Roles.SUPER_ADMIN, Roles.FINANCE_ADMIN):
@@ -532,8 +527,8 @@ def user_reset_password_api(request, user_id):
     is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
     if not is_super:
         target_role = primary_role(target_user)
-        if target_user.is_superuser or target_role == Roles.SUPER_ADMIN or target_role not in (Roles.FINANCE_USER, Roles.ACCOUNTANT, Roles.FINANCE_ADMIN):
-            return JsonResponse({"error": "Access denied. Finance Admin can only manage Finance User and Accountant accounts."}, status=403)
+        if target_user.is_superuser or target_role in (Roles.SUPER_ADMIN, Roles.HR_ADMIN, Roles.EMPLOYEE, Roles.STUDENT_PARENT):
+            return JsonResponse({"error": "Access denied. Finance Admin cannot manage institutional administrators or non-finance employees."}, status=403)
 
     try:
         data = json.loads(request.body.decode("utf-8")) if request.body else {}
