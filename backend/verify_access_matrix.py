@@ -38,7 +38,7 @@ assert res_su.status_code == 200, f"Expected 200 for Super Admin, got {res_su.st
 data = json.loads(res_su.content.decode('utf-8'))
 print(f"[TEST 2 PASSED] access_matrix_api accessed by Super Admin. Roles: {data['roles']}")
 assert Roles.ACCOUNTANT in data['roles']
-assert Roles.FEE_MANAGER in data['roles']
+assert Roles.FINANCE_USER in data['roles']
 
 # 3. Super Admin unticks 'fee-structures' for Accountant
 toggle_post = rf.post(
@@ -78,38 +78,44 @@ acc_mods2 = get_accessible_modules_for_user(acc)
 print(f"[TEST 4 PASSED] Re-ticked fee-structures for Accountant. In sidebar? {'fee-structures' in acc_mods2}")
 assert 'fee-structures' in acc_mods2
 
-# 5. Super Admin unticks 'scholarships' for Fee Manager
-fm = User.objects.get(username='feemanager')
-toggle_fm = rf.post(
+# 5. Verify Finance User default modules do NOT include invoices-receipts
+fu = User.objects.get(username='financeuser')
+fu_mods = get_accessible_modules_for_user(fu)
+print(f"[TEST 5 PASSED] Finance User accessible modules: {fu_mods}")
+assert 'invoices-receipts' not in fu_mods, "invoices-receipts should NOT be accessible by Finance User!"
+assert 'fee-structures' in fu_mods, "fee-structures should be accessible by Finance User"
+
+# 6. Super Admin ticks 'scholarships' for Finance User and then unticks
+toggle_fu = rf.post(
     '/api/core/access-matrix/',
     data=json.dumps({
-        'role': Roles.FEE_MANAGER,
-        'module_id': 'scholarships',
-        'is_granted': False,
-    }),
-    content_type='application/json'
-)
-toggle_fm.user = su
-access_matrix_api(toggle_fm)
-
-fm_mods = get_accessible_modules_for_user(fm)
-print(f"[TEST 5 PASSED] Unticked scholarships for Fee Manager. In sidebar? {'scholarships' in fm_mods}")
-assert 'scholarships' not in fm_mods
-
-# Restore scholarships for Fee Manager
-toggle_fm2 = rf.post(
-    '/api/core/access-matrix/',
-    data=json.dumps({
-        'role': Roles.FEE_MANAGER,
+        'role': Roles.FINANCE_USER,
         'module_id': 'scholarships',
         'is_granted': True,
     }),
     content_type='application/json'
 )
-toggle_fm2.user = su
-access_matrix_api(toggle_fm2)
-fm_mods2 = get_accessible_modules_for_user(fm)
-assert 'scholarships' in fm_mods2
-print("[TEST 6 PASSED] Restored scholarships for Fee Manager. In sidebar? True")
+toggle_fu.user = su
+access_matrix_api(toggle_fu)
+
+fu_mods_granted = get_accessible_modules_for_user(fu)
+print(f"[TEST 6 PASSED] Granted scholarships for Finance User. In sidebar? {'scholarships' in fu_mods_granted}")
+assert 'scholarships' in fu_mods_granted
+
+# Restore by unticking scholarships
+toggle_fu2 = rf.post(
+    '/api/core/access-matrix/',
+    data=json.dumps({
+        'role': Roles.FINANCE_USER,
+        'module_id': 'scholarships',
+        'is_granted': False,
+    }),
+    content_type='application/json'
+)
+toggle_fu2.user = su
+access_matrix_api(toggle_fu2)
+fu_mods_restored = get_accessible_modules_for_user(fu)
+assert 'scholarships' not in fu_mods_restored
+print("[TEST 7 PASSED] Restored scholarships unticked for Finance User.")
 
 print("--- ALL SUPER ADMIN ACCESS CONTROL TESTS PASSED PERFECTLY ---")

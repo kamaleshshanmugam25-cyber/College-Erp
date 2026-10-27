@@ -101,7 +101,6 @@ roles_to_test = [
     ('Finance Admin', 'finance-dashboard'),
     ('Finance User', 'finance-dashboard'),
     ('Accountant', 'finance-dashboard'),
-    ('Fee Manager', 'fee-structures'),
     ('HR Admin', 'attendance-leaves'),
     ('Viewer', 'finance-dashboard'),
     ('Employee', 'employee-details'),

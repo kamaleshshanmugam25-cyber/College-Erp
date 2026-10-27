@@ -43,9 +43,8 @@ const FINANCE_MODULES = [
 
 const AVAILABLE_ROLES = [
   { id: 'Finance Admin', label: 'Finance Admin', description: 'Full financial authority, user management & access control', badgeClass: 'bg-blue-100 text-blue-800 border-blue-200' },
-  { id: 'Finance User', label: 'Finance User', description: 'Desk fee collections, receipt generation & accounts inquiry', badgeClass: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
+  { id: 'Finance User', label: 'Finance User', description: 'Desk fee structures, student dues & accounts inquiry', badgeClass: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
   { id: 'Accountant', label: 'Accountant', description: 'Fee payments, collections, ledger entries & transactions', badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
-  { id: 'Fee Manager', label: 'Fee Manager', description: 'Course fees, quota waivers, concessions & student dues', badgeClass: 'bg-amber-100 text-amber-800 border-amber-200' },
   { id: 'HR Admin', label: 'HR / Staff', description: 'Staff directory, attendance approvals & payroll records', badgeClass: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
   { id: 'Viewer', label: 'Viewer', description: 'Read-only access to authorized finance reports & statements', badgeClass: 'bg-slate-100 text-slate-700 border-slate-300' },
   { id: 'Super Admin', label: 'Super Admin', description: 'Root institutional system administrator', badgeClass: 'bg-purple-100 text-purple-800 border-purple-200' },
@@ -93,7 +92,7 @@ export function UserManagementView() {
     password: '',
     is_active: true,
     has_custom_permissions: false,
-    custom_modules: ['fee-structures', 'invoices-receipts'],
+    custom_modules: ['fee-structures'],
   });
   const [createError, setCreateError] = useState('');
   const [submittingCreate, setSubmittingCreate] = useState(false);
@@ -127,10 +126,10 @@ export function UserManagementView() {
 
   const applyPresetModules = (preset) => {
     if (preset === 'desk') {
-      setSelectedModules(['fee-structures', 'invoices-receipts']);
+      setSelectedModules(['fee-structures']);
       setHasCustomPermissions(true);
     } else if (preset === 'desk_overview') {
-      setSelectedModules(['finance-dashboard', 'fee-structures', 'invoices-receipts']);
+      setSelectedModules(['finance-dashboard', 'fee-structures']);
       setHasCustomPermissions(true);
     } else if (preset === 'all') {
       setSelectedModules(FINANCE_MODULES.map((m) => m.id));
@@ -192,7 +191,7 @@ export function UserManagementView() {
         password: '',
         is_active: true,
         has_custom_permissions: false,
-        custom_modules: ['fee-structures', 'invoices-receipts'],
+        custom_modules: ['fee-structures'],
       });
       loadUsers(1);
     } catch (err) {
@@ -295,7 +294,7 @@ export function UserManagementView() {
     setSelectedModules(
       Array.isArray(u.custom_modules) && u.custom_modules.length > 0
         ? [...u.custom_modules]
-        : (u.role === 'Finance User' ? ['fee-structures', 'invoices-receipts'] : ['fee-structures', 'invoices-receipts', 'finance-dashboard'])
+        : (u.role === 'Finance User' ? ['fee-structures'] : ['fee-structures', 'invoices-receipts', 'finance-dashboard'])
     );
   };
 
@@ -395,8 +394,8 @@ export function UserManagementView() {
             <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
               {stats?.role_counts?.['Accountant'] || 0} Accountant
             </span>
-            <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-bold text-[10px] border border-amber-200">
-              {stats?.role_counts?.['Fee Manager'] || 0} Fee Mgr
+            <span className="px-2 py-0.5 rounded-md bg-cyan-50 text-cyan-700 font-bold text-[10px] border border-cyan-200">
+              {stats?.role_counts?.['Finance User'] || 0} Fin User
             </span>
             <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10px] border border-slate-200">
               {stats?.role_counts?.['Viewer'] || 0} Viewer
@@ -767,10 +766,10 @@ export function UserManagementView() {
                       <div className="flex items-center gap-1.5 text-[10px]">
                         <button
                           type="button"
-                          onClick={() => setCreateForm({ ...createForm, custom_modules: ['fee-structures', 'invoices-receipts'] })}
+                          onClick={() => setCreateForm({ ...createForm, custom_modules: ['fee-structures'] })}
                           className="px-2 py-0.5 rounded bg-white border border-slate-200 font-bold text-blue-600 hover:bg-blue-50 cursor-pointer"
                         >
-                          ⚡ Fees & Invoices
+                          ⚡ Fee Structures
                         </button>
                         <button
                           type="button"
@@ -938,7 +937,7 @@ export function UserManagementView() {
                     onClick={() => {
                       setHasCustomPermissions(true);
                       if (selectedModules.length === 0) {
-                        setSelectedModules(['fee-structures', 'invoices-receipts']);
+                        setSelectedModules(['fee-structures']);
                       }
                     }}
                     className={`p-3 rounded-xl border text-left cursor-pointer transition ${

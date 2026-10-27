@@ -147,7 +147,7 @@ class ReceiptPDFView(RoleRequiredMixin, View):
 
 @csrf_exempt
 def finance_dashboard_api(request):
-    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.ACCOUNTANT, Roles.FEE_MANAGER, Roles.VIEWER):
+    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.ACCOUNTANT, Roles.FINANCE_USER, Roles.VIEWER):
         log_audit(
             request=request,
             action=AuditLog.Actions.ACCESS_DENIED,
@@ -316,12 +316,12 @@ def finance_meta_api(request):
 @csrf_exempt
 def create_quota_api(request):
     """Create a new scholarship / fee waiver category (e.g. Merit 25%, Sports 50%)."""
-    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.FEE_MANAGER):
+    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.FINANCE_USER):
         log_audit(
             request=request,
             action=AuditLog.Actions.ACCESS_DENIED,
             resource=request.path,
-            details={"reason": "Requires Finance Admin, Super Admin, or Fee Manager"}
+            details={"reason": "Requires Finance Admin, Super Admin, or Finance User"}
         )
         return JsonResponse({"error": "Forbidden: Requires authorized finance role"}, status=403)
     if request.method != "POST":
@@ -365,12 +365,12 @@ def create_quota_api(request):
 @csrf_exempt
 def create_course_api(request):
     """Create a new academic program / course and immediately make it available for fee allocation."""
-    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.FEE_MANAGER):
+    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.FINANCE_USER):
         log_audit(
             request=request,
             action=AuditLog.Actions.ACCESS_DENIED,
             resource=request.path,
-            details={"reason": "Requires Finance Admin, Super Admin, or Fee Manager"}
+            details={"reason": "Requires Finance Admin, Super Admin, or Finance User"}
         )
         return JsonResponse({"error": "Forbidden: Requires authorized finance role"}, status=403)
     if request.method != "POST":
@@ -416,12 +416,12 @@ def create_course_api(request):
 @csrf_exempt
 def allocate_fee_api(request):
     """Allocate fee schedule and installment milestones to an individual student or in batch to a course."""
-    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.FEE_MANAGER):
+    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.FINANCE_USER):
         log_audit(
             request=request,
             action=AuditLog.Actions.ACCESS_DENIED,
             resource=request.path,
-            details={"reason": "Requires Finance Admin, Super Admin, or Fee Manager"}
+            details={"reason": "Requires Finance Admin, Super Admin, or Finance User"}
         )
         return JsonResponse({"error": "Forbidden: Requires authorized finance role"}, status=403)
     if request.method != "POST":
@@ -613,6 +613,19 @@ def my_dues_api(request):
 
 def invoices_api(request):
     """API endpoint for Invoices & Receipts sidebar item."""
+    from apps.core.views import get_accessible_modules_for_user
+    if not request.user.is_authenticated or (
+        not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.ACCOUNTANT)
+        and "invoices-receipts" not in get_accessible_modules_for_user(request.user)
+    ):
+        log_audit(
+            request=request,
+            action=AuditLog.Actions.ACCESS_DENIED,
+            resource=request.path,
+            details={"reason": "Requires Finance Admin, Super Admin, Accountant, or explicit Invoices & Receipts access"}
+        )
+        return JsonResponse({"error": "Forbidden: Invoices & Receipts access required"}, status=403)
+
     from .models import FeeReceipt
     receipts = FeeReceipt.objects.all().select_related("transaction__fee__student", "transaction__fee__course")
     items = []
@@ -692,12 +705,12 @@ def my_scholarships_api(request):
 @csrf_exempt
 def allocate_department_fee_api(request):
     """Enter fee amount and allocate to an individual department or across each department."""
-    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.FEE_MANAGER):
+    if not request.user.is_authenticated or not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.FINANCE_USER):
         log_audit(
             request=request,
             action=AuditLog.Actions.ACCESS_DENIED,
             resource=request.path,
-            details={"reason": "Requires Finance Admin, Super Admin, or Fee Manager"}
+            details={"reason": "Requires Finance Admin, Super Admin, or Finance User"}
         )
         return JsonResponse({"error": "Forbidden: Requires authorized finance role"}, status=403)
     if request.method != "POST":

@@ -142,15 +142,13 @@ DEFAULT_ROLE_ACCESS = {
         "general-ledger", "financial-reports"
     ],
     Roles.FINANCE_USER: [
-        "finance-dashboard", "fee-structures", "invoices-receipts"
+        "finance-dashboard", "fee-structures"
     ],
     Roles.ACCOUNTANT: [
         "finance-dashboard", "fee-structures", "invoices-receipts", "scholarships",
         "general-ledger", "financial-reports"
     ],
-    Roles.FEE_MANAGER: [
-        "finance-dashboard", "fee-structures", "invoices-receipts", "scholarships", "financial-reports"
-    ],
+
     Roles.HR_ADMIN: [
         "employee-lifecycle", "attendance-leaves", "holidays", "performance-appraisal"
     ],
@@ -647,7 +645,6 @@ def access_matrix_api(request):
 
     target_roles = [
         Roles.ACCOUNTANT,
-        Roles.FEE_MANAGER,
         Roles.FINANCE_USER,
         Roles.FINANCE_ADMIN,
         Roles.VIEWER,

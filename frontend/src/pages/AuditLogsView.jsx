@@ -184,7 +184,7 @@ export function AuditLogsView() {
             <option value="Super Admin">Super Admin</option>
             <option value="Finance Admin">Finance Admin</option>
             <option value="Accountant">Accountant</option>
-            <option value="Fee Manager">Fee Manager</option>
+            <option value="Finance User">Finance User</option>
             <option value="HR Admin">HR Admin</option>
             <option value="Viewer">Viewer</option>
           </select>

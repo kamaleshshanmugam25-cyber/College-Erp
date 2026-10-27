@@ -17,7 +17,6 @@ class Roles:
         FINANCE_ADMIN,
         FINANCE_USER,
         ACCOUNTANT,
-        FEE_MANAGER,
         HR_ADMIN,
         EMPLOYEE,
         STUDENT_PARENT,
@@ -29,7 +28,6 @@ class Roles:
         FINANCE_ADMIN,
         FINANCE_USER,
         ACCOUNTANT,
-        FEE_MANAGER,
         VIEWER,
     )
 
@@ -38,13 +36,9 @@ class Roles:
 ROLE_PERMISSIONS = {
     Roles.SUPER_ADMIN: ["*"],
     Roles.FINANCE_ADMIN: ["fees.*", "ledger.*", "core.*"],
-    Roles.FINANCE_USER: ["fees.view_feereceipt", "fees.add_feereceipt", "fees.view_studentfee",
-                         "fees.view_course", "ledger.view_generalledger"],
+    Roles.FINANCE_USER: ["fees.view_studentfee", "fees.view_course"],
     Roles.ACCOUNTANT: ["fees.view_feereceipt", "fees.add_feereceipt", "fees.view_studentfee",
                        "fees.change_studentfee", "ledger.view_generalledger", "ledger.add_journalvoucher"],
-    Roles.FEE_MANAGER: ["fees.view_course", "fees.add_course", "fees.change_course",
-                        "fees.view_studentfee", "fees.add_studentfee", "fees.change_studentfee",
-                        "fees.view_feereceipt"],
     Roles.HR_ADMIN: ["hr.*"],
     Roles.EMPLOYEE: ["hr.view_attendance", "hr.view_leaveapplication",
                      "hr.add_leaveapplication", "hr.view_payroll"],

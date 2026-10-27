@@ -56,16 +56,6 @@ const ROLES = [
     defaultTab: 'finance-dashboard',
   },
   {
-    id: 'Fee Manager',
-    demoRole: 'Fee Manager',
-    label: 'Fee Manager',
-    description: 'Course fees, quota waivers, concessions & student dues',
-    badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
-    iconColor: 'text-amber-600 bg-amber-50 border-amber-200',
-    icon: Landmark,
-    defaultTab: 'fee-structures',
-  },
-  {
     id: 'HR Admin',
     demoRole: 'HR Admin',
     label: 'HR Admin',
@@ -118,7 +108,6 @@ export function Navbar({ activeTab, setActiveTab }) {
     'Finance Admin': 'bg-blue-100 text-blue-800 border-blue-200',
     'Finance User': 'bg-cyan-100 text-cyan-800 border-cyan-200',
     'Accountant': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-    'Fee Manager': 'bg-amber-100 text-amber-800 border-amber-200',
     'HR Admin': 'bg-indigo-100 text-indigo-800 border-indigo-200',
     'Viewer': 'bg-slate-100 text-slate-700 border-slate-300',
     'Employee': 'bg-teal-100 text-teal-800 border-teal-200',
@@ -133,7 +122,6 @@ export function Navbar({ activeTab, setActiveTab }) {
     if (user.roles?.includes('Finance Admin')) return 'Finance Admin';
     if (user.roles?.includes('Finance User')) return 'Finance User';
     if (user.roles?.includes('Accountant')) return 'Accountant';
-    if (user.roles?.includes('Fee Manager')) return 'Fee Manager';
     if (user.roles?.includes('HR Admin')) return 'HR Admin';
     if (user.roles?.includes('Viewer')) return 'Viewer';
     if (user.roles?.includes('Employee')) return 'Employee';

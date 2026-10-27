@@ -63,7 +63,7 @@ function MainApp() {
     if (user.username !== lastUsername) {
       setLastUsername(user.username);
       const isSuper = hasRole('Super Admin');
-      const isFinance = isSuper || hasRole('Finance Admin', 'Finance User', 'Accountant', 'Fee Manager', 'Viewer');
+      const isFinance = isSuper || hasRole('Finance Admin', 'Finance User', 'Accountant', 'Viewer');
       const isHR = isSuper || hasRole('HR Admin');
       const isStudent = hasRole('Student/Parent');
       const isEmployee = hasRole('Employee');
@@ -138,10 +138,10 @@ function MainApp() {
       case 'student-scholarships':
         return <ScholarshipsView />;
       case 'general-ledger':
-        if (hasRole('Fee Manager', 'Viewer') && !isAdmin && !hasRole('Accountant', 'Finance User')) {
+        if (hasRole('Viewer') && !isAdmin && !hasRole('Accountant')) {
           return (
             <AccessDeniedView
-              requiredRole="Finance Admin, Accountant or Finance User"
+              requiredRole="Finance Admin or Accountant"
               reason="General & Journal Ledger functions are restricted to authorized financial personnel."
               onGoHome={() => handleTabChange('finance-dashboard')}
             />
@@ -149,6 +149,15 @@ function MainApp() {
         }
         return <LedgerView />;
       case 'invoices-receipts':
+        if (!canAccessModule('invoices-receipts')) {
+          return (
+            <AccessDeniedView
+              requiredRole="Finance Admin or Accountant"
+              reason="Invoices & Receipts access is restricted to authorized financial personnel."
+              onGoHome={() => handleTabChange('fee-structures')}
+            />
+          );
+        }
         return <FinanceDashboard />;
       case 'user-management':
       case 'finance-users':

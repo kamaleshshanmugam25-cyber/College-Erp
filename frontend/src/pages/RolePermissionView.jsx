@@ -21,9 +21,8 @@ import {
 
 const ROLES = [
   { id: 'Finance Admin', label: 'Finance Admin', badge: 'bg-blue-100 text-blue-800 border-blue-200', desc: 'Full financial authority, user management, and security administration' },
-  { id: 'Finance User', label: 'Finance User', badge: 'bg-cyan-100 text-cyan-800 border-cyan-200', desc: 'Desk fee collections, receipt generation & accounts inquiry' },
+  { id: 'Finance User', label: 'Finance User', badge: 'bg-cyan-100 text-cyan-800 border-cyan-200', desc: 'Desk fee structures and student inquiries' },
   { id: 'Accountant', label: 'Accountant', badge: 'bg-emerald-100 text-emerald-800 border-emerald-200', desc: 'Fee payments, collections, ledger entries, vouchers, and transactions' },
-  { id: 'Fee Manager', label: 'Fee Manager', badge: 'bg-amber-100 text-amber-800 border-amber-200', desc: 'Tuition structures, quota waivers, student concessions, and receipts' },
   { id: 'HR Admin', label: 'HR / Staff', badge: 'bg-indigo-100 text-indigo-800 border-indigo-200', desc: 'Staff lifecycle records, attendance, leave approvals, and payroll' },
   { id: 'Viewer', label: 'Viewer', badge: 'bg-slate-100 text-slate-700 border-slate-300', desc: 'Read-only visibility into permitted financial summaries and reports' },
   { id: 'Super Admin', label: 'Super Admin', badge: 'bg-purple-100 text-purple-800 border-purple-200', desc: 'Root institutional system administrator (all permissions locked)' },
@@ -164,7 +163,7 @@ export function RolePermissionView() {
           }`}
         >
           <Layers className="w-3.5 h-3.5" />
-          <span>Sidebar Module Assignment (Accountant, Fee Manager, etc.)</span>
+          <span>Sidebar Module Assignment (Accountant, Finance User, etc.)</span>
         </button>
 
         <button
