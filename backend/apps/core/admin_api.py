@@ -489,24 +489,37 @@ def user_detail_api(request, user_id):
     elif request.method == "DELETE":
         if is_self:
             return JsonResponse({
-                "error": "Self-Lockout Safeguard: You cannot delete or deactivate your own account.",
+                "error": "Self-Lockout Safeguard: You cannot delete your own administrative account.",
                 "code": "SELF_LOCKOUT_FORBIDDEN"
             }, status=400)
 
-        target_user.is_active = False
-        target_user.save(update_fields=["is_active"])
+        is_super = request.user.is_superuser or has_role(request.user, Roles.SUPER_ADMIN)
+        if not is_super:
+            target_role = primary_role(target_user)
+            if target_user.is_superuser or target_role in (Roles.SUPER_ADMIN, Roles.HR_ADMIN, Roles.EMPLOYEE, Roles.STUDENT_PARENT):
+                return JsonResponse({"error": "Access denied. Finance Admin cannot delete institutional administrators or non-finance employees."}, status=403)
 
-        log_audit(
-            request=request,
-            action=AuditLog.Actions.USER_DEACTIVATED,
-            resource="User",
-            resource_id=target_user.id,
-            details={"target_username": target_user.username, "method": "DELETE_REQUEST"}
-        )
+        username_deleted = target_user.username
+        user_id_deleted = target_user.id
+
+        try:
+            with transaction.atomic():
+                log_audit(
+                    request=request,
+                    action=getattr(AuditLog.Actions, "USER_DELETED", "USER_DELETED"),
+                    resource="User",
+                    resource_id=user_id_deleted,
+                    details={"target_username": username_deleted, "method": "DELETE_REQUEST"}
+                )
+                if hasattr(target_user, "erp_profile"):
+                    target_user.erp_profile.delete()
+                target_user.delete()
+        except Exception as e:
+            return JsonResponse({"error": f"Failed to delete user '{username_deleted}': {str(e)}"}, status=400)
 
         return JsonResponse({
             "success": True,
-            "message": f"User '{target_user.username}' has been deactivated."
+            "message": f"User account '{username_deleted}' has been permanently deleted."
         })
 
     return JsonResponse({"error": "Method not allowed"}, status=405)

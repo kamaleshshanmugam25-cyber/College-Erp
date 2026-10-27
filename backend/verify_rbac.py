@@ -86,7 +86,8 @@ res_unauth = users_list_api(unauth_req)
 assert res_unauth.status_code == 403, f"Expected 403, got {res_unauth.status_code}"
 print("[TEST 3 PASSED] Finance User blocked from admin user management (403 Forbidden)")
 
-# Test 4: Self-lockout prevention
+# Test 4: Self-lockout & Delete User verification
+# 4.1 Self-deactivation prevention
 self_deact_req = rf.patch(
     f'/api/admin/users/{fa.id}/',
     data=json.dumps({'is_active': False}),
@@ -95,7 +96,25 @@ self_deact_req = rf.patch(
 self_deact_req.user = fa
 res_self = user_detail_api(self_deact_req, fa.id)
 assert res_self.status_code == 400, f"Expected 400 self-lockout, got {res_self.status_code}"
-print("[TEST 4 PASSED] Self-deactivation properly blocked by safeguard: 400 Bad Request")
+print("[TEST 4.1 PASSED] Self-deactivation properly blocked by safeguard: 400 Bad Request")
+
+# 4.2 Self-deletion prevention
+self_del_req = rf.delete(f'/api/admin/users/{fa.id}/')
+self_del_req.user = fa
+res_self_del = user_detail_api(self_del_req, fa.id)
+assert res_self_del.status_code == 400, f"Expected 400 self-deletion lockout, got {res_self_del.status_code}"
+print("[TEST 4.2 PASSED] Self-deletion properly blocked by safeguard: 400 Bad Request")
+
+# 4.3 Finance Admin can permanently delete a user
+from apps.core.models import UserProfile
+del_target = User.objects.create_user(username='delete_test_user', password='password123', email='testdel@apex.edu')
+UserProfile.objects.create(user=del_target, department='Finance')
+del_req = rf.delete(f'/api/admin/users/{del_target.id}/')
+del_req.user = fa
+res_del = user_detail_api(del_req, del_target.id)
+assert res_del.status_code == 200, f"Expected 200 on user deletion, got {res_del.status_code}: {res_del.content}"
+assert not User.objects.filter(id=del_target.id).exists(), "User should be permanently removed from DB"
+print(f"[TEST 4.3 PASSED] Finance Admin permanently deleted user @{del_target.username} (200 OK)")
 
 # Test 5: Verify Audit Log has recorded all events
 log_req = rf.get('/api/admin/audit-logs/')
