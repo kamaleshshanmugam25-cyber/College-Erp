@@ -14,6 +14,7 @@ import { AuditLogsView } from './pages/AuditLogsView';
 import { AccessDeniedView } from './components/AccessDeniedView';
 import { LedgerView } from './components/LedgerView';
 import { ScholarshipsView } from './components/ScholarshipsView';
+import { InvoicesReceiptsView } from './pages/InvoicesReceiptsView';
 import { ModuleView } from './pages/ModuleView';
 import { LoginPage } from './pages/LoginPage';
 import { Building2, RefreshCw } from 'lucide-react';
@@ -159,7 +160,7 @@ function MainApp() {
             />
           );
         }
-        return <FinanceDashboard />;
+        return <InvoicesReceiptsView />;
       case 'user-management':
       case 'finance-users':
         if (!isSuper && !isAdmin) {

@@ -284,7 +284,7 @@ export function EmployeeLifecycleView() {
             className="inline-flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer whitespace-nowrap"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Bulk Upload Staff (Excel / CSV)</span>
+            <span>Bulk Upload Staff</span>
           </button>
 
           <button

@@ -185,6 +185,10 @@ export const api = {
 
   // Additional Sidebar Module APIs
   getInvoicesList: () => apiRequest('/api/invoices/'),
+  collectCounterFee: (data) => apiRequest('/api/invoices/', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
   getTaxCompliance: () => apiRequest('/api/finance/tax-compliance/'),
   getMyScholarships: () => apiRequest('/api/portal/my-scholarships/'),
   getStatutoryCompliance: () => apiRequest('/api/hr/statutory-compliance/'),

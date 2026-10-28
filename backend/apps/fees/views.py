@@ -611,11 +611,12 @@ def my_dues_api(request):
     })
 
 
+@csrf_exempt
 def invoices_api(request):
     """API endpoint for Invoices & Receipts sidebar item."""
     from apps.core.views import get_accessible_modules_for_user
     if not request.user.is_authenticated or (
-        not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.ACCOUNTANT)
+        not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.ACCOUNTANT, Roles.FINANCE_USER)
         and "invoices-receipts" not in get_accessible_modules_for_user(request.user)
     ):
         log_audit(
@@ -626,25 +627,199 @@ def invoices_api(request):
         )
         return JsonResponse({"error": "Forbidden: Invoices & Receipts access required"}, status=403)
 
-    from .models import FeeReceipt
-    receipts = FeeReceipt.objects.all().select_related("transaction__fee__student", "transaction__fee__course")
-    items = []
-    for r in receipts:
-        items.append({
+    from .models import FeeInstallment, FeeReceipt, PaymentTransaction, StudentFee
+
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            data = request.POST
+
+        installment_id = data.get("installment_id")
+        amount = data.get("amount")
+        method = str(data.get("method", "CASH")).upper()
+        notes = str(data.get("notes", "")).strip()
+
+        if not installment_id or not amount:
+            return JsonResponse({"error": "Installment ID and Amount are required."}, status=400)
+
+        try:
+            amount_val = Decimal(str(amount))
+            if amount_val <= 0:
+                return JsonResponse({"error": "Collection amount must be greater than zero."}, status=400)
+        except Exception:
+            return JsonResponse({"error": "Invalid collection amount."}, status=400)
+
+        try:
+            installment = FeeInstallment.objects.select_related("fee__student", "fee__course").get(pk=installment_id)
+        except FeeInstallment.DoesNotExist:
+            return JsonResponse({"error": "Installment not found."}, status=404)
+
+        balance = installment.amount - installment.paid_amount
+        if amount_val > balance:
+            return JsonResponse({"error": f"Amount Rs {amount_val:,.2f} exceeds outstanding installment balance Rs {balance:,.2f}."}, status=400)
+
+        import uuid
+        from django.db import transaction as db_transaction
+        from .services import issue_receipt
+        from apps.ledger.services import post_fee_receipt
+
+        txn_method = PaymentTransaction.Method.UPI
+        if "CARD" in method:
+            txn_method = PaymentTransaction.Method.CARD
+        elif "NET" in method or "BANK" in method:
+            txn_method = PaymentTransaction.Method.NET_BANKING
+        elif "CASH" in method:
+            txn_method = "CASH"
+        else:
+            txn_method = method
+
+        with db_transaction.atomic():
+            order_id = f"CTR-{timezone.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6].upper()}"
+            txn = PaymentTransaction.objects.create(
+                fee=installment.fee,
+                gateway="COUNTER_CASHIER",
+                order_id=order_id,
+                gateway_txn_id=notes or f"REF-{uuid.uuid4().hex[:8].upper()}",
+                amount=amount_val,
+                method=txn_method,
+                status=PaymentTransaction.Status.SUCCESS,
+                paid_at=timezone.now(),
+                initiated_by=request.user,
+            )
+
+            installment.paid_amount += amount_val
+            if installment.paid_amount >= installment.amount:
+                installment.status = FeeInstallment.Status.PAID
+            else:
+                installment.status = FeeInstallment.Status.PARTIAL
+            installment.save(update_fields=["paid_amount", "status", "updated_at"])
+
+            receipt = issue_receipt(txn, generated_by=request.user)
+
+            try:
+                post_fee_receipt(receipt)
+            except Exception as e:
+                log.warning("Ledger post notice for counter receipt %s: %s", receipt.receipt_number, e)
+
+            log_audit(
+                request=request,
+                action="COUNTER_FEE_COLLECTION",
+                resource=f"FeeInstallment:{installment.id}",
+                details={
+                    "receipt_number": receipt.receipt_number,
+                    "amount": float(amount_val),
+                    "student": installment.fee.student.name,
+                    "roll_no": installment.fee.student.roll_no,
+                    "method": method,
+                }
+            )
+
+        return JsonResponse({
+            "success": True,
+            "message": f"Successfully collected Rs {amount_val:,.2f} from {installment.fee.student.name}",
+            "receipt": {
+                "id": receipt.id,
+                "receipt_number": receipt.receipt_number,
+                "order_id": txn.order_id,
+                "amount": float(txn.amount),
+                "student_name": installment.fee.student.name,
+                "roll_no": installment.fee.student.roll_no,
+                "course_name": installment.fee.course.name,
+                "course_code": installment.fee.course.code,
+                "academic_year": installment.fee.academic_year,
+                "method": method,
+                "timestamp": receipt.created_at.isoformat(),
+                "sac_code": "9992 (Educational Services - GST Exempt)",
+            }
+        })
+
+    receipts_qs = FeeReceipt.objects.all().select_related("transaction__fee__student", "transaction__fee__course").order_by("-id")
+    receipts_list = []
+    total_receipts_amount = Decimal("0.00")
+    for r in receipts_qs:
+        amt = r.transaction.amount if r.transaction else Decimal("0.00")
+        total_receipts_amount += amt
+        receipts_list.append({
             "id": r.id,
             "receipt_number": r.receipt_number,
             "order_id": r.transaction.order_id if r.transaction else "—",
-            "amount": float(r.transaction.amount) if r.transaction else 0.0,
+            "gateway_txn_id": r.transaction.gateway_txn_id if r.transaction else "—",
+            "amount": float(amt),
             "student_name": r.transaction.fee.student.name if r.transaction and r.transaction.fee and r.transaction.fee.student else "—",
             "roll_no": r.transaction.fee.student.roll_no if r.transaction and r.transaction.fee and r.transaction.fee.student else "—",
+            "course_name": r.transaction.fee.course.name if r.transaction and r.transaction.fee and r.transaction.fee.course else "—",
             "course_code": r.transaction.fee.course.code if r.transaction and r.transaction.fee and r.transaction.fee.course else "—",
-            "gateway": r.transaction.gateway if r.transaction else "Instant UPI",
-            "method": r.transaction.get_method_display() if r.transaction else "UPI / NetBanking",
+            "academic_year": r.transaction.fee.academic_year if r.transaction and r.transaction.fee else "2026-27",
+            "gateway": r.transaction.gateway if r.transaction else "Counter Cashier",
+            "method": r.transaction.method if r.transaction else "CASH",
             "status": r.transaction.status if r.transaction else "SUCCESS",
             "timestamp": r.created_at.isoformat(),
             "sac_code": "9992 (Educational Services - GST Exempt)",
         })
-    return JsonResponse({"invoices": items, "total_count": len(items)})
+
+    today = timezone.localdate()
+    installments_qs = FeeInstallment.objects.all().select_related("fee__student", "fee__course", "fee__quota_category").order_by("due_date", "id")
+    invoices_list = []
+    total_invoiced = Decimal("0.00")
+    total_collected = Decimal("0.00")
+    paid_count = 0
+    pending_count = 0
+
+    for inst in installments_qs:
+        total_invoiced += inst.amount
+        total_collected += inst.paid_amount
+        bal = inst.amount - inst.paid_amount
+        if inst.status == FeeInstallment.Status.PAID:
+            paid_count += 1
+        else:
+            pending_count += 1
+
+        is_overdue = (inst.due_date < today) and (bal > 0)
+        inv_status = "OVERDUE" if is_overdue else inst.status
+
+        inv_num = f"INV-{inst.fee.academic_year[:4]}-{inst.id:04d}"
+        invoices_list.append({
+            "id": inst.id,
+            "fee_id": inst.fee_id,
+            "invoice_number": inv_num,
+            "student_name": inst.fee.student.name,
+            "roll_no": inst.fee.student.roll_no,
+            "email": inst.fee.student.user.email if (inst.fee.student.user and inst.fee.student.user.email) else f"{inst.fee.student.roll_no.lower()}@campus.edu",
+            "course_name": inst.fee.course.name,
+            "course_code": inst.fee.course.code,
+            "quota_name": inst.fee.quota_category.name if inst.fee.quota_category else "General Merit",
+            "academic_year": inst.fee.academic_year,
+            "sequence": inst.sequence,
+            "installment_label": f"Installment {inst.sequence}",
+            "due_date": inst.due_date.isoformat(),
+            "amount": float(inst.amount),
+            "paid_amount": float(inst.paid_amount),
+            "balance": float(bal),
+            "status": inv_status,
+            "is_overdue": is_overdue,
+            "sac_code": "9992 (Higher Educational Services)",
+        })
+
+    outstanding_balance = max(Decimal("0.00"), total_invoiced - total_collected)
+
+    summary = {
+        "total_invoiced": float(total_invoiced),
+        "total_collected": float(total_collected),
+        "outstanding_balance": float(outstanding_balance),
+        "total_invoices_count": len(invoices_list),
+        "paid_invoices_count": paid_count,
+        "pending_invoices_count": pending_count,
+        "receipts_count": len(receipts_list),
+        "total_receipts_amount": float(total_receipts_amount),
+    }
+
+    return JsonResponse({
+        "invoices": invoices_list,
+        "receipts": receipts_list,
+        "summary": summary,
+        "total_count": len(invoices_list) + len(receipts_list),
+    })
 
 
 def tax_compliance_api(request):
