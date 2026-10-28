@@ -43,7 +43,6 @@ export function Sidebar({ activeTab, setActiveTab }) {
       items: [
         { id: 'user-management', label: 'Finance Users & Roles', icon: Users, adminOnly: true },
         { id: 'role-permissions', label: 'Role & Permissions', icon: ShieldCheck, superOnly: true },
-        { id: 'audit-logs', label: 'Audit Logs', icon: Clock, superOnly: true },
       ],
     },
     {

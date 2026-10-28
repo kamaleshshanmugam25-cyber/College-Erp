@@ -184,6 +184,7 @@ export const api = {
   }),
 
   // Additional Sidebar Module APIs
+  getFinancialReports: () => apiRequest('/api/finance/reports/'),
   getInvoicesList: () => apiRequest('/api/invoices/'),
   collectCounterFee: (data) => apiRequest('/api/invoices/', {
     method: 'POST',

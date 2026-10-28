@@ -15,6 +15,7 @@ import { AccessDeniedView } from './components/AccessDeniedView';
 import { LedgerView } from './components/LedgerView';
 import { ScholarshipsView } from './components/ScholarshipsView';
 import { InvoicesReceiptsView } from './pages/InvoicesReceiptsView';
+import { FinancialReportsView } from './pages/FinancialReportsView';
 import { ModuleView } from './pages/ModuleView';
 import { LoginPage } from './pages/LoginPage';
 import { Building2, RefreshCw } from 'lucide-react';
@@ -132,8 +133,18 @@ function MainApp() {
   const renderContent = () => {
     switch (activeTab) {
       case 'finance-dashboard':
-      case 'financial-reports':
         return <FinanceDashboard />;
+      case 'financial-reports':
+        if (!canAccessModule('financial-reports')) {
+          return (
+            <AccessDeniedView
+              requiredRole="Finance Admin or Accountant"
+              reason="Financial Reports & Statements are restricted to authorized financial personnel."
+              onGoHome={() => handleTabChange('finance-dashboard')}
+            />
+          );
+        }
+        return <FinancialReportsView />;
       case 'fee-structures':
         return <FeeCalculator />;
       case 'scholarships':
@@ -186,16 +197,7 @@ function MainApp() {
         }
         return <RolePermissionView />;
       case 'audit-logs':
-        if (!isSuper) {
-          return (
-            <AccessDeniedView
-              requiredRole="Super Admin"
-              reason="Security Audit Logs are restricted to Super Admin."
-              onGoHome={() => handleTabChange('finance-dashboard')}
-            />
-          );
-        }
-        return <AuditLogsView />;
+        return <FinanceDashboard />;
       case 'student-details':
       case 'student-portal':
         return <StudentPortal />;

@@ -1011,3 +1011,154 @@ def allocate_department_fee_api(request):
         "installments": installments,
         "message": f"Successfully set fee ₹{float(fee_val):,.2f} and allocated to Department of {department} ({len(created_fees)} student(s))!",
     })
+
+
+@csrf_exempt
+def financial_reports_api(request):
+    """API endpoint for Financial Reports & Statements sidebar item."""
+    from apps.core.views import get_accessible_modules_for_user
+    if not request.user.is_authenticated or (
+        not has_role(request.user, Roles.FINANCE_ADMIN, Roles.SUPER_ADMIN, Roles.ACCOUNTANT, Roles.FINANCE_USER)
+        and "financial-reports" not in get_accessible_modules_for_user(request.user)
+    ):
+        log_audit(
+            request=request,
+            action=AuditLog.Actions.ACCESS_DENIED,
+            resource=request.path,
+            details={"reason": "Requires Finance Admin, Super Admin, Accountant, or explicit Financial Reports access"}
+        )
+        return JsonResponse({"error": "Forbidden: Financial Reports access required"}, status=403)
+
+    from apps.ledger.models import AccountBalance, AccountGroup, GeneralLedger
+    from apps.fees.models import FeeInstallment, StudentFee, PaymentTransaction, Course
+    from django.db.models import Sum, Count
+
+    # Aggregates from Fees
+    fee_agg = FeeInstallment.objects.aggregate(
+        total_invoiced=Sum("amount"),
+        total_collected=Sum("paid_amount"),
+    )
+    total_invoiced = fee_agg["total_invoiced"] or Decimal("0.00")
+    total_collected = fee_agg["total_collected"] or Decimal("0.00")
+    total_outstanding = max(Decimal("0.00"), total_invoiced - total_collected)
+
+    # General Ledger Account Balances
+    balances = {}
+    for code, label in AccountGroup.choices:
+        ab = AccountBalance.objects.filter(account_group=code).first()
+        balances[code] = {
+            "code": code,
+            "label": label,
+            "balance": float(ab.balance) if ab else 0.0,
+        }
+
+    bank_balance = balances.get("BANK", {}).get("balance", float(total_collected))
+    fee_income = balances.get("FEE_INCOME", {}).get("balance", float(total_collected))
+    vendor_expense = balances.get("VENDOR_EXPENSE", {}).get("balance", 0.0)
+    salary_expense = balances.get("SALARY_EXPENSE", {}).get("balance", 0.0)
+    total_expenses = vendor_expense + salary_expense
+    net_surplus = fee_income - total_expenses
+
+    # Trial Balance Lines
+    gl_lines = []
+    tot_debit = Decimal("0.00")
+    tot_credit = Decimal("0.00")
+    for code, label in AccountGroup.choices:
+        deb = GeneralLedger.objects.filter(account_group=code).aggregate(s=Sum("debit"))["s"] or Decimal("0.00")
+        cred = GeneralLedger.objects.filter(account_group=code).aggregate(s=Sum("credit"))["s"] or Decimal("0.00")
+        tot_debit += deb
+        tot_credit += cred
+        bal = float(balances[code]["balance"])
+        gl_lines.append({
+            "code": code,
+            "name": label,
+            "debit": float(deb),
+            "credit": float(cred),
+            "net_balance": bal,
+            "nature": "DEBIT" if code in ["BANK", "SALARY_EXPENSE", "VENDOR_EXPENSE"] else "CREDIT",
+        })
+
+    # Program / Course Revenue Breakdown
+    courses = Course.objects.all()
+    program_breakdown = []
+    for c in courses:
+        c_insts = FeeInstallment.objects.filter(fee__course=c)
+        c_inv = c_insts.aggregate(s=Sum("amount"))["s"] or Decimal("0.00")
+        c_paid = c_insts.aggregate(s=Sum("paid_amount"))["s"] or Decimal("0.00")
+        c_bal = max(Decimal("0.00"), c_inv - c_paid)
+        eff = round((float(c_paid) / float(c_inv) * 100), 1) if c_inv > 0 else 100.0
+        students_count = StudentFee.objects.filter(course=c, is_deleted=False).count()
+        program_breakdown.append({
+            "id": c.id,
+            "code": c.code,
+            "name": c.name,
+            "department": c.department,
+            "students_count": students_count,
+            "annual_fee": float(c.annual_fee),
+            "total_invoiced": float(c_inv),
+            "total_collected": float(c_paid),
+            "outstanding": float(c_bal),
+            "collection_efficiency": eff,
+        })
+
+    # Income & Expenditure statement
+    income_statement = {
+        "revenues": [
+            {"head": "Academic Tuition & Program Fees", "amount": float(total_collected), "category": "Core Operations"},
+            {"head": "Laboratory & Infrastructure Subscriptions", "amount": 0.0, "category": "Academic Services"},
+            {"head": "Examination & Certification Receipts", "amount": 0.0, "category": "Academic Services"},
+        ],
+        "total_revenue": float(total_collected),
+        "expenses": [
+            {"head": "Faculty & Academic Staff Compensation", "amount": salary_expense, "category": "Payroll"},
+            {"head": "Campus Maintenance & Vendor Operations", "amount": vendor_expense, "category": "Operations"},
+            {"head": "Library & Information Technology Licenses", "amount": 0.0, "category": "Academic Support"},
+        ],
+        "total_expense": total_expenses,
+        "net_surplus": float(net_surplus),
+        "surplus_margin": round((float(net_surplus) / float(total_collected) * 100), 1) if total_collected > 0 else 0.0,
+    }
+
+    # Balance Sheet
+    balance_sheet = {
+        "assets": {
+            "current_assets": [
+                {"item": "Institutional Bank Balances & Cash Reserves", "amount": bank_balance},
+                {"item": "Tuition Fees Receivable (Student Outstanding Dues)", "amount": float(total_outstanding)},
+            ],
+            "total_assets": bank_balance + float(total_outstanding),
+        },
+        "liabilities_and_equity": {
+            "current_liabilities": [
+                {"item": "Statutory PF / ESI / TDS Dues Payable", "amount": balances.get("PF_PAYABLE", {}).get("balance", 0.0) + balances.get("ESI_PAYABLE", {}).get("balance", 0.0) + balances.get("TDS_PAYABLE", {}).get("balance", 0.0)},
+                {"item": "Accrued Faculty Salaries Payable", "amount": balances.get("SALARY_PAYABLE", {}).get("balance", 0.0)},
+            ],
+            "institutional_funds": [
+                {"item": "Institutional Educational Capital Fund & Accumulated Surplus", "amount": bank_balance + float(total_outstanding)},
+            ],
+            "total_liabilities_and_equity": bank_balance + float(total_outstanding),
+        }
+    }
+
+    return JsonResponse({
+        "fiscal_year": "2026-27",
+        "as_of_date": timezone.localdate().isoformat(),
+        "summary": {
+            "gross_revenue": float(total_collected),
+            "total_invoiced": float(total_invoiced),
+            "outstanding_dues": float(total_outstanding),
+            "operating_expenses": total_expenses,
+            "net_surplus": float(net_surplus),
+            "bank_balance": bank_balance,
+            "collection_rate": round((float(total_collected) / float(total_invoiced) * 100), 1) if total_invoiced > 0 else 0.0,
+        },
+        "trial_balance": {
+            "lines": gl_lines,
+            "total_debit": float(tot_debit),
+            "total_credit": float(tot_credit),
+            "is_balanced": tot_debit == tot_credit,
+        },
+        "income_statement": income_statement,
+        "balance_sheet": balance_sheet,
+        "program_breakdown": program_breakdown,
+    })

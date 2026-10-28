@@ -41,6 +41,7 @@ urlpatterns = [
     path("api/fees/allocate/", fees_views.allocate_fee_api, name="api_allocate_fee"),
     path("api/finance/department-fee-allocate/", fees_views.allocate_department_fee_api, name="api_dept_fee_allocate"),
     path("api/invoices/", fees_views.invoices_api, name="api_invoices"),
+    path("api/finance/reports/", fees_views.financial_reports_api, name="api_financial_reports"),
     path("api/finance/tax-compliance/", fees_views.tax_compliance_api, name="api_tax_compliance"),
     path("api/portal/dues/", fees_views.my_dues_api, name="api_my_dues"),
     path("api/portal/my-scholarships/", fees_views.my_scholarships_api, name="api_my_scholarships"),
