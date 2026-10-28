@@ -729,6 +729,7 @@ def invoices_api(request):
                 "course_code": installment.fee.course.code,
                 "academic_year": installment.fee.academic_year,
                 "method": method,
+                "gateway_txn_id": txn.gateway_txn_id,
                 "timestamp": receipt.created_at.isoformat(),
                 "sac_code": "9992 (Educational Services - GST Exempt)",
             }
