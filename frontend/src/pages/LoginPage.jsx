@@ -150,32 +150,33 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-10 sm:px-6 lg:px-8">
-      {/* Brand Header */}
-      <div className="sm:mx-auto sm:w-full sm:max-w-lg text-center space-y-2">
-        <div className="w-12 h-12 rounded-2xl bg-blue-700 text-white flex items-center justify-center mx-auto shadow-md">
-          {mode === 'register' ? (
-            <UserPlus className="w-6 h-6" />
-          ) : mode === 'forgot' ? (
-            <KeyRound className="w-6 h-6" />
-          ) : (
-            <Building2 className="w-6 h-6" />
-          )}
+    <div className="h-full w-full bg-slate-50 overflow-y-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-full flex flex-col justify-center py-10 sm:py-14 sm:mx-auto sm:w-full sm:max-w-lg">
+        {/* Brand Header */}
+        <div className="text-center space-y-2">
+          <div className="w-12 h-12 rounded-2xl bg-blue-700 text-white flex items-center justify-center mx-auto shadow-md">
+            {mode === 'register' ? (
+              <UserPlus className="w-6 h-6" />
+            ) : mode === 'forgot' ? (
+              <KeyRound className="w-6 h-6" />
+            ) : (
+              <Building2 className="w-6 h-6" />
+            )}
+          </div>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            {mode === 'register' ? 'Create an Account' : mode === 'forgot' ? 'Reset Password' : 'Apex University ERP'}
+          </h1>
+          <p className="text-xs text-slate-500 font-medium">
+            {mode === 'register' 
+              ? 'Register new staff or student portal access'
+              : mode === 'forgot'
+              ? 'Recover your portal access credentials'
+              : 'Institutional Finance, General Ledger & Faculty HR'}
+          </p>
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-          {mode === 'register' ? 'Create an Account' : mode === 'forgot' ? 'Reset Password' : 'Apex University ERP'}
-        </h1>
-        <p className="text-xs text-slate-500 font-medium">
-          {mode === 'register' 
-            ? 'Register new staff or student portal access'
-            : mode === 'forgot'
-            ? 'Recover your portal access credentials'
-            : 'Institutional Finance, General Ledger & Faculty HR'}
-        </p>
-      </div>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-lg px-4">
-        <div className="bg-white py-8 px-6 sm:px-10 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+        <div className="mt-6 w-full">
+          <div className="bg-white py-8 px-6 sm:px-10 rounded-2xl border border-slate-200 shadow-sm space-y-5">
           {error && (
             <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -483,6 +484,7 @@ export function LoginPage() {
             </form>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
