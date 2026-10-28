@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import {
   TrendingUp,
   FileText,
-  DollarSign,
   Scale,
   Building2,
   Calendar,
@@ -142,215 +141,206 @@ export function FinancialReportsView() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner - Executive Corporate Institutional Style */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-4">
+      {/* Header Banner - Clean, Logically Aligned Controls */}
+      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Left: Clean Title & Subtitle */}
         <div>
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-slate-900 text-white rounded-xl shadow-sm">
-              <TrendingUp className="w-6 h-6 text-blue-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Financial Reports & Statements</h1>
-                <span className="text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded">
-                  Audited Books
-                </span>
-              </div>
-              <p className="text-sm text-slate-500 mt-0.5">
-                Statutory accounting statements, Income & Expenditure, Institutional Balance Sheet, and General Ledger Trial Balance
-              </p>
-            </div>
-          </div>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+            Financial Reports & Statements
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Audited statutory accounting statements, balance sheet, and general ledger trial balance
+          </p>
         </div>
 
-        {/* Controls */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Fiscal Year Filter */}
-          <select
-            value={fiscalYear}
-            onChange={(e) => setFiscalYear(e.target.value)}
-            className="px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-slate-700 cursor-pointer"
-          >
-            <option value="2026-27">FY 2026-27 (Current)</option>
-            <option value="2025-26">FY 2025-26 (Audited)</option>
-          </select>
+        {/* Right: Logically Aligned Filters and Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          {/* Group 1: Filters */}
+          <div className="flex items-center gap-2">
+            <select
+              value={fiscalYear}
+              onChange={(e) => setFiscalYear(e.target.value)}
+              className="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700 cursor-pointer shadow-sm"
+            >
+              <option value="2026-27">FY 2026-27 (Current)</option>
+              <option value="2025-26">FY 2025-26 (Audited)</option>
+            </select>
 
-          {/* Period Filter */}
-          <select
-            value={period}
-            onChange={(e) => setPeriod(e.target.value)}
-            className="px-3 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700 cursor-pointer"
-          >
-            <option value="FULL_YEAR">Full Fiscal Year</option>
-            <option value="Q1">Q1 (Apr – Jun)</option>
-            <option value="Q2">Q2 (Jul – Sep)</option>
-            <option value="Q3">Q3 (Oct – Dec)</option>
-            <option value="Q4">Q4 (Jan – Mar)</option>
-          </select>
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              className="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700 cursor-pointer shadow-sm"
+            >
+              <option value="FULL_YEAR">Full Fiscal Year</option>
+              <option value="Q1">Q1 (Apr – Jun)</option>
+              <option value="Q2">Q2 (Jul – Sep)</option>
+              <option value="Q3">Q3 (Oct – Dec)</option>
+              <option value="Q4">Q4 (Jan – Mar)</option>
+            </select>
+          </div>
 
-          <button
-            onClick={fetchReports}
-            disabled={loading}
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
-            title="Refresh Financial Books"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </button>
+          {/* Divider */}
+          <div className="h-5 w-px bg-slate-200 hidden sm:block"></div>
 
-          <button
-            onClick={exportCurrentStatement}
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition shadow-sm cursor-pointer"
-          >
-            <Download className="w-4 h-4" />
-            <span>Export CSV</span>
-          </button>
+          {/* Group 2: Action Buttons (All side-by-side with uniform heights) */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchReports}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition cursor-pointer shadow-sm disabled:opacity-50"
+              title="Refresh Financial Books"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600' : 'text-slate-500'}`} />
+              <span>Refresh</span>
+            </button>
 
-          <button
-            onClick={() => setShowPrintModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition shadow-sm shadow-blue-500/20 cursor-pointer"
-          >
-            <Printer className="w-4 h-4" />
-            <span>Print Official Statement</span>
-          </button>
+            <button
+              onClick={exportCurrentStatement}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition shadow-sm cursor-pointer"
+              title="Export Statement to CSV"
+            >
+              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <span>Export CSV</span>
+            </button>
+
+            <button
+              onClick={() => setShowPrintModal(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition shadow-sm cursor-pointer whitespace-nowrap"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print Statement</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-sm flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
+        <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
             <span>{error}</span>
           </div>
           <button onClick={fetchReports} className="text-xs font-semibold underline hover:text-rose-900 cursor-pointer">
-            Try Again
+            Retry
           </button>
         </div>
       )}
 
-      {/* Clean, Non-Playful Professional Institutional Metric Summary (Surplus Removed) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Metric 1: Realized Tuition Collections */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Gross Realized Inflow
-            </span>
-            <div className="p-2 bg-slate-100 text-slate-700 rounded-lg">
-              <DollarSign className="w-5 h-5" />
-            </div>
+      {/* Logically Correct 4-Metric Accounting Strip (Demand -> Inflow -> Outstanding -> Bank Reserves) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Metric 1: Total Scheduled Demand (Initial Academic Billing) */}
+        <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
+          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            Total Scheduled Demand
           </div>
-          <div className="mt-2">
-            <div className="text-2xl font-bold font-mono text-slate-900">
-              ₹{Number(summary.gross_revenue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">
-              Realized tuition & fee collections settled in General Ledger
-            </div>
+          <div className="text-lg font-bold font-mono text-slate-900 mt-1">
+            ₹{Number(summary.total_invoiced || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+          </div>
+          <div className="text-[11px] text-slate-500 mt-1">
+            Approved annual student billing (AY 2026-27)
           </div>
         </div>
 
-        {/* Metric 2: Total Scheduled Demands */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Total Scheduled Demand
-            </span>
-            <div className="p-2 bg-slate-100 text-slate-700 rounded-lg">
-              <FileText className="w-5 h-5" />
-            </div>
+        {/* Metric 2: Gross Realized Inflow (Collected from Demands) */}
+        <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
+          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            Gross Realized Inflow
           </div>
-          <div className="mt-2">
-            <div className="text-2xl font-bold font-mono text-slate-900">
-              ₹{Number(summary.total_invoiced || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">
-              Outstanding student dues: ₹{Number(summary.outstanding_dues || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </div>
+          <div className="text-lg font-bold font-mono text-emerald-700 mt-1">
+            ₹{Number(summary.gross_revenue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+          </div>
+          <div className="text-[11px] text-slate-500 mt-1">
+            Settled collections audited in General Ledger
           </div>
         </div>
 
-        {/* Metric 3: Liquid Cash & Bank Reserves */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Cash & Bank Reserves
-            </span>
-            <div className="p-2 bg-slate-100 text-slate-700 rounded-lg">
-              <Landmark className="w-5 h-5" />
-            </div>
+        {/* Metric 3: Outstanding Student Dues (Demand minus Inflow) */}
+        <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
+          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            Outstanding Student Dues
           </div>
-          <div className="mt-2">
-            <div className="text-2xl font-bold font-mono text-slate-900">
-              ₹{Number(summary.bank_balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </div>
-            <div className="text-xs text-slate-500 mt-1 font-medium flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>State Bank of India • Dr Bank Account Verified</span>
-            </div>
+          <div className="text-lg font-bold font-mono text-amber-700 mt-1">
+            ₹{Number(summary.outstanding_dues || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+          </div>
+          <div className="text-[11px] text-slate-500 mt-1">
+            Active pending / partial installments
+          </div>
+        </div>
+
+        {/* Metric 4: Liquid Cash & Bank Reserves */}
+        <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
+          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            Cash & Bank Reserves
+          </div>
+          <div className="text-lg font-bold font-mono text-slate-900 mt-1">
+            ₹{Number(summary.bank_balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+          </div>
+          <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>State Bank of India • Dr Verified</span>
           </div>
         </div>
       </div>
 
       {/* Main Container with Statement Navigation Tabs */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        {/* Navigation Tabs (Professional, clean monochrome) */}
-        <div className="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-slate-50/60">
-          <div className="flex flex-wrap items-center gap-1 bg-slate-200 p-1 rounded-xl">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        {/* Navigation Tabs */}
+        <div className="p-3 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50/70">
+          <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-200/70 rounded-lg">
             <button
               onClick={() => setActiveTab('income-expenditure')}
-              className={`flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-semibold rounded-lg transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer ${
                 activeTab === 'income-expenditure'
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <FileText className="w-4 h-4 text-slate-600" />
+              <FileText className="w-3.5 h-3.5 text-slate-500" />
               <span>Income & Expenditure</span>
             </button>
 
             <button
               onClick={() => setActiveTab('balance-sheet')}
-              className={`flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-semibold rounded-lg transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer ${
                 activeTab === 'balance-sheet'
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Scale className="w-4 h-4 text-slate-600" />
-              <span>Institutional Balance Sheet</span>
+              <Scale className="w-3.5 h-3.5 text-slate-500" />
+              <span>Balance Sheet</span>
             </button>
 
             <button
               onClick={() => setActiveTab('trial-balance')}
-              className={`flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-semibold rounded-lg transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer ${
                 activeTab === 'trial-balance'
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <BookOpen className="w-4 h-4 text-slate-600" />
-              <span>General Ledger Trial Balance</span>
+              <BookOpen className="w-3.5 h-3.5 text-slate-500" />
+              <span>Trial Balance</span>
             </button>
 
             <button
               onClick={() => setActiveTab('program-revenue')}
-              className={`flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-semibold rounded-lg transition cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer ${
                 activeTab === 'program-revenue'
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <GraduationCap className="w-4 h-4 text-slate-600" />
-              <span>Program Revenue Breakdown</span>
+              <GraduationCap className="w-3.5 h-3.5 text-slate-500" />
+              <span>Program Breakdown</span>
             </button>
           </div>
 
-          <div className="text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+          <div className="text-xs font-medium text-slate-500 bg-white px-2.5 py-1 rounded-md border border-slate-200 self-start md:self-auto">
             <span>Books as of: </span>
-            <span className="text-slate-900 font-mono">
+            <span className="text-slate-900 font-mono font-semibold">
               {new Date(reportData.as_of_date).toLocaleDateString('en-IN', {
                 day: '2-digit',
                 month: 'short',
@@ -360,23 +350,23 @@ export function FinancialReportsView() {
           </div>
         </div>
 
-        {/* TAB 1: Income & Expenditure (Clean Corporate Accounting, No Playful Gradient) */}
+        {/* TAB 1: Income & Expenditure */}
         {activeTab === 'income-expenditure' && (
-          <div className="p-6 space-y-6">
+          <div className="p-5 space-y-5">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
-                <h3 className="text-base font-bold text-slate-900">Statement of Income & Expenditure</h3>
+                <h3 className="text-sm font-bold text-slate-900">Statement of Income & Expenditure</h3>
                 <p className="text-xs text-slate-500">For the fiscal year ending {fiscalYear} • Core Operations & Academic Overhead</p>
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded">
+              <span className="text-[11px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded">
                 Accrual Basis Accounting
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Left Column: Revenues / Inflow */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-                <div className="bg-slate-100 p-3.5 border-b border-slate-200 flex items-center justify-between">
+              <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                <div className="bg-slate-50 p-3 border-b border-slate-200 flex items-center justify-between">
                   <span className="font-bold text-xs text-slate-800 uppercase tracking-wide">
                     Operating Revenues / Inflows
                   </span>
@@ -384,14 +374,14 @@ export function FinancialReportsView() {
                     ₹{Number(income_statement.total_revenue).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
-                <div className="divide-y divide-slate-100 p-2">
+                <div className="divide-y divide-slate-100 p-1">
                   {income_statement.revenues.map((rev, idx) => (
-                    <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-50/70 rounded-lg transition">
+                    <div key={idx} className="p-2.5 flex items-center justify-between hover:bg-slate-50/70 rounded transition">
                       <div>
-                        <div className="font-semibold text-sm text-slate-900">{rev.head}</div>
-                        <div className="text-xs text-slate-500">{rev.category}</div>
+                        <div className="font-semibold text-xs text-slate-900">{rev.head}</div>
+                        <div className="text-[11px] text-slate-500">{rev.category}</div>
                       </div>
-                      <div className="text-sm font-bold font-mono text-slate-900">
+                      <div className="text-xs font-bold font-mono text-slate-900">
                         ₹{Number(rev.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </div>
                     </div>
@@ -400,8 +390,8 @@ export function FinancialReportsView() {
               </div>
 
               {/* Right Column: Expenditures / Outflow */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-                <div className="bg-slate-100 p-3.5 border-b border-slate-200 flex items-center justify-between">
+              <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                <div className="bg-slate-50 p-3 border-b border-slate-200 flex items-center justify-between">
                   <span className="font-bold text-xs text-slate-800 uppercase tracking-wide">
                     Operating Expenditures / Outflows
                   </span>
@@ -409,14 +399,14 @@ export function FinancialReportsView() {
                     ₹{Number(income_statement.total_expense).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
-                <div className="divide-y divide-slate-100 p-2">
+                <div className="divide-y divide-slate-100 p-1">
                   {income_statement.expenses.map((exp, idx) => (
-                    <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-50/70 rounded-lg transition">
+                    <div key={idx} className="p-2.5 flex items-center justify-between hover:bg-slate-50/70 rounded transition">
                       <div>
-                        <div className="font-semibold text-sm text-slate-900">{exp.head}</div>
-                        <div className="text-xs text-slate-500">{exp.category}</div>
+                        <div className="font-semibold text-xs text-slate-900">{exp.head}</div>
+                        <div className="text-[11px] text-slate-500">{exp.category}</div>
                       </div>
-                      <div className="text-sm font-bold font-mono text-slate-700">
+                      <div className="text-xs font-bold font-mono text-slate-700">
                         ₹{Number(exp.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </div>
                     </div>
@@ -425,23 +415,23 @@ export function FinancialReportsView() {
               </div>
             </div>
 
-            {/* Clean Professional Accounting Balancing Strip (Replaces playful gradient surplus card) */}
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
-              <div className="space-y-1">
-                <div className="font-bold text-slate-900 text-sm">
+            {/* Clean Professional Accounting Balancing Strip */}
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+              <div className="space-y-0.5">
+                <div className="font-bold text-slate-900 text-xs">
                   Net Balance Transferred to Educational Capital Fund
                 </div>
-                <div className="text-slate-500">
-                  Total Operating Inflows: <span className="font-mono font-semibold text-slate-800">₹{Number(income_statement.total_revenue).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span> | Total Outflows: <span className="font-mono font-semibold text-slate-800">₹{Number(income_statement.total_expense).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                <div className="text-slate-500 text-[11px]">
+                  Total Inflows: <span className="font-mono font-semibold text-slate-800">₹{Number(income_statement.total_revenue).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span> | Total Outflows: <span className="font-mono font-semibold text-slate-800">₹{Number(income_statement.total_expense).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                 </div>
               </div>
 
-              <div className="text-right">
-                <div className="text-xl font-bold font-mono text-slate-900">
+              <div className="text-left md:text-right">
+                <div className="text-lg font-bold font-mono text-slate-900">
                   ₹{Number(income_statement.net_surplus).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </div>
-                <div className="text-slate-500 font-medium">
-                  Verified & Carried to General Ledger Balance Sheet
+                <div className="text-[11px] text-slate-500">
+                  Verified & Carried to Balance Sheet
                 </div>
               </div>
             </div>
@@ -450,42 +440,42 @@ export function FinancialReportsView() {
 
         {/* TAB 2: Institutional Balance Sheet */}
         {activeTab === 'balance-sheet' && (
-          <div className="p-6 space-y-6">
+          <div className="p-5 space-y-5">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
-                <h3 className="text-base font-bold text-slate-900">Institutional Balance Sheet (Statement of Financial Position)</h3>
-                <p className="text-xs text-slate-500">As of {fiscalYear} • Liquidity, Defaulter Receivables & Educational Capital</p>
+                <h3 className="text-sm font-bold text-slate-900">Institutional Balance Sheet (Statement of Financial Position)</h3>
+                <p className="text-xs text-slate-500">As of {fiscalYear} • Liquidity, Receivables & Educational Capital</p>
               </div>
-              <div className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-full">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Double-Entry Balance Verified</span>
+              <div className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-full">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Double-Entry Balanced</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Assets Column */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-                <div className="bg-slate-100 p-3.5 border-b border-slate-200 flex items-center justify-between">
+              <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                <div className="bg-slate-50 p-3 border-b border-slate-200 flex items-center justify-between">
                   <span className="font-bold text-xs text-slate-800 uppercase tracking-wide">Assets & Receivables</span>
                   <span className="text-xs font-mono font-bold text-slate-900">
                     ₹{Number(balance_sheet.assets.total_assets).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
-                <div className="p-3 space-y-3">
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2">Current Assets</div>
+                <div className="p-3 space-y-2">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Current Assets</div>
                   <div className="divide-y divide-slate-100">
                     {balance_sheet.assets.current_assets.map((ast, idx) => (
-                      <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-50/70 rounded-lg transition">
-                        <span className="text-sm font-semibold text-slate-800">{ast.item}</span>
-                        <span className="text-sm font-bold font-mono text-slate-900">
+                      <div key={idx} className="p-2 flex items-center justify-between hover:bg-slate-50/70 rounded transition">
+                        <span className="text-xs font-semibold text-slate-800">{ast.item}</span>
+                        <span className="text-xs font-bold font-mono text-slate-900">
                           ₹{Number(ast.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </span>
                       </div>
                     ))}
                   </div>
-                  <div className="border-t-2 border-slate-300 pt-3 px-3 flex items-center justify-between font-bold text-sm">
+                  <div className="border-t border-slate-200 pt-2 px-1 flex items-center justify-between font-bold text-xs">
                     <span className="uppercase text-slate-900">Total Assets:</span>
-                    <span className="font-mono text-slate-900 text-base">
+                    <span className="font-mono text-slate-900 text-sm">
                       ₹{Number(balance_sheet.assets.total_assets).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -493,41 +483,41 @@ export function FinancialReportsView() {
               </div>
 
               {/* Liabilities & Equity Column */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-                <div className="bg-slate-100 p-3.5 border-b border-slate-200 flex items-center justify-between">
+              <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                <div className="bg-slate-50 p-3 border-b border-slate-200 flex items-center justify-between">
                   <span className="font-bold text-xs text-slate-800 uppercase tracking-wide">Liabilities & Capital Funds</span>
                   <span className="text-xs font-mono font-bold text-slate-900">
                     ₹{Number(balance_sheet.liabilities_and_equity.total_liabilities_and_equity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
-                <div className="p-3 space-y-3">
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2">Current Liabilities</div>
+                <div className="p-3 space-y-2">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Current Liabilities</div>
                   <div className="divide-y divide-slate-100">
                     {balance_sheet.liabilities_and_equity.current_liabilities.map((liab, idx) => (
-                      <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-50/70 rounded-lg transition">
-                        <span className="text-sm font-semibold text-slate-800">{liab.item}</span>
-                        <span className="text-sm font-bold font-mono text-slate-700">
+                      <div key={idx} className="p-2 flex items-center justify-between hover:bg-slate-50/70 rounded transition">
+                        <span className="text-xs font-semibold text-slate-800">{liab.item}</span>
+                        <span className="text-xs font-bold font-mono text-slate-900">
                           ₹{Number(liab.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2 pt-2">Institutional Capital Reserves</div>
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1 pt-2">Institutional Funds</div>
                   <div className="divide-y divide-slate-100">
                     {balance_sheet.liabilities_and_equity.institutional_funds.map((fnd, idx) => (
-                      <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-50/70 rounded-lg transition">
-                        <span className="text-sm font-semibold text-slate-800">{fnd.item}</span>
-                        <span className="text-sm font-bold font-mono text-slate-900">
+                      <div key={idx} className="p-2 flex items-center justify-between hover:bg-slate-50/70 rounded transition">
+                        <span className="text-xs font-semibold text-slate-800">{fnd.item}</span>
+                        <span className="text-xs font-bold font-mono text-slate-900">
                           ₹{Number(fnd.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="border-t-2 border-slate-300 pt-3 px-3 flex items-center justify-between font-bold text-sm">
-                    <span className="uppercase text-slate-900">Total Liabilities & Capital:</span>
-                    <span className="font-mono text-slate-900 text-base">
+                  <div className="border-t border-slate-200 pt-2 px-1 flex items-center justify-between font-bold text-xs">
+                    <span className="uppercase text-slate-900">Total Liabilities & Funds:</span>
+                    <span className="font-mono text-slate-900 text-sm">
                       ₹{Number(balance_sheet.liabilities_and_equity.total_liabilities_and_equity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
@@ -540,63 +530,55 @@ export function FinancialReportsView() {
         {/* TAB 3: General Ledger Trial Balance */}
         {activeTab === 'trial-balance' && (
           <div className="overflow-x-auto">
-            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">General Ledger Trial Balance Register</h3>
-                <p className="text-xs text-slate-500">Summary debit & credit ledger totals for all active chart of accounts</p>
+                <h3 className="text-xs font-bold text-slate-900">General Ledger Account Head Trial Balance</h3>
+                <p className="text-[11px] text-slate-500">Direct extracts from Double-Entry General Ledger</p>
               </div>
-              <div className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-full">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Trial Balance: In Balance</span>
-              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Debits Equal Credits (Balanced)
+              </span>
             </div>
 
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-100 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  <th className="py-3 px-4">Account Code</th>
-                  <th className="py-3 px-4">Account Head / Classification</th>
-                  <th className="py-3 px-4 text-center">Nature</th>
-                  <th className="py-3 px-4 text-right">Debit Total (₹)</th>
-                  <th className="py-3 px-4 text-right">Credit Total (₹)</th>
-                  <th className="py-3 px-4 text-right">Closing Balance (₹)</th>
+                <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="py-2.5 px-4">Account Code</th>
+                  <th className="py-2.5 px-4">Account Head Name</th>
+                  <th className="py-2.5 px-4 text-center">Nature</th>
+                  <th className="py-2.5 px-4 text-right">Debit Balance (₹)</th>
+                  <th className="py-2.5 px-4 text-right">Credit Balance (₹)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
-                {trial_balance.lines.map((line) => (
-                  <tr key={line.code} className="hover:bg-slate-50/70 transition">
-                    <td className="py-3 px-4 font-mono font-semibold text-blue-700">{line.code}</td>
-                    <td className="py-3 px-4 font-medium text-slate-900">{line.name}</td>
-                    <td className="py-3 px-4 text-center">
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                        {line.nature}
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {trial_balance.lines.map((acc) => (
+                  <tr key={acc.code} className="hover:bg-slate-50/70 transition">
+                    <td className="py-2.5 px-4 font-mono font-semibold text-blue-700">{acc.code}</td>
+                    <td className="py-2.5 px-4 font-semibold text-slate-900">{acc.name}</td>
+                    <td className="py-2.5 px-4 text-center">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                        {acc.nature}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right font-mono text-slate-700">
-                      ₹{Number(line.debit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    <td className="py-2.5 px-4 text-right font-mono font-bold text-slate-900">
+                      {acc.debit > 0 ? `₹${Number(acc.debit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono text-slate-700">
-                      ₹{Number(line.credit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
-                      ₹{Number(line.net_balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    <td className="py-2.5 px-4 text-right font-mono font-bold text-slate-900">
+                      {acc.credit > 0 ? `₹${Number(acc.credit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
                     </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr className="bg-slate-100 font-bold border-t-2 border-slate-300 text-sm">
-                  <td colSpan="3" className="py-3.5 px-4 text-slate-900 uppercase tracking-wider text-right">
-                    Total Balancing Verification:
+                <tr className="border-t-2 border-slate-900 bg-slate-50 font-bold text-xs">
+                  <td colSpan="3" className="py-2.5 px-4 uppercase tracking-wider text-slate-900">
+                    Trial Balance Totals:
                   </td>
-                  <td className="py-3.5 px-4 text-right font-mono text-slate-900 text-base">
+                  <td className="py-2.5 px-4 text-right font-mono text-slate-900 text-sm font-extrabold">
                     ₹{Number(trial_balance.total_debit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </td>
-                  <td className="py-3.5 px-4 text-right font-mono text-slate-900 text-base">
+                  <td className="py-2.5 px-4 text-right font-mono text-slate-900 text-sm font-extrabold">
                     ₹{Number(trial_balance.total_credit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                  </td>
-                  <td className="py-3.5 px-4 text-right font-mono text-emerald-700 text-xs">
-                    BALANCED ✓
                   </td>
                 </tr>
               </tfoot>
@@ -607,51 +589,51 @@ export function FinancialReportsView() {
         {/* TAB 4: Academic Program Revenue Breakdown */}
         {activeTab === 'program-revenue' && (
           <div className="overflow-x-auto">
-            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Academic Program Revenue & Recovery Performance</h3>
-                <p className="text-xs text-slate-500">Milestone demands vs realized fee receipts segmented by academic courses</p>
+                <h3 className="text-xs font-bold text-slate-900">Academic Program Revenue & Recovery Performance</h3>
+                <p className="text-[11px] text-slate-500">Demands vs realized fee receipts segmented by academic courses</p>
               </div>
             </div>
 
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-100 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  <th className="py-3 px-4">Program Code</th>
-                  <th className="py-3 px-4">Program & Degree</th>
-                  <th className="py-3 px-4">Department</th>
-                  <th className="py-3 px-4 text-center">Allocated</th>
-                  <th className="py-3 px-4 text-right">Demanded (₹)</th>
-                  <th className="py-3 px-4 text-right">Collected (₹)</th>
-                  <th className="py-3 px-4 text-right">Outstanding (₹)</th>
-                  <th className="py-3 px-4 text-center">Realization</th>
+                <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="py-2.5 px-4">Program Code</th>
+                  <th className="py-2.5 px-4">Program Name</th>
+                  <th className="py-2.5 px-4">Department</th>
+                  <th className="py-2.5 px-4 text-center">Allocated</th>
+                  <th className="py-2.5 px-4 text-right">Demanded (₹)</th>
+                  <th className="py-2.5 px-4 text-right">Collected (₹)</th>
+                  <th className="py-2.5 px-4 text-right">Outstanding (₹)</th>
+                  <th className="py-2.5 px-4 text-center">Realization</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
+              <tbody className="divide-y divide-slate-100 text-xs">
                 {program_breakdown.map((prog) => (
                   <tr key={prog.id} className="hover:bg-slate-50/70 transition">
-                    <td className="py-3 px-4 font-mono font-semibold text-blue-700">{prog.code}</td>
-                    <td className="py-3 px-4 font-semibold text-slate-900">{prog.name}</td>
-                    <td className="py-3 px-4 text-slate-600 text-xs font-medium">{prog.department}</td>
-                    <td className="py-3 px-4 text-center font-mono text-xs">{prog.students_count}</td>
-                    <td className="py-3 px-4 text-right font-mono text-slate-700">
+                    <td className="py-2.5 px-4 font-mono font-semibold text-blue-700">{prog.code}</td>
+                    <td className="py-2.5 px-4 font-semibold text-slate-900">{prog.name}</td>
+                    <td className="py-2.5 px-4 text-slate-600 text-[11px]">{prog.department}</td>
+                    <td className="py-2.5 px-4 text-center font-mono text-xs">{prog.students_count}</td>
+                    <td className="py-2.5 px-4 text-right font-mono text-slate-700">
                       ₹{Number(prog.total_invoiced).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono font-semibold text-slate-900">
+                    <td className="py-2.5 px-4 text-right font-mono font-semibold text-slate-900">
                       ₹{Number(prog.total_collected).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono font-bold text-amber-700">
+                    <td className="py-2.5 px-4 text-right font-mono font-bold text-amber-700">
                       ₹{Number(prog.outstanding).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="py-3 px-4 text-center whitespace-nowrap">
+                    <td className="py-2.5 px-4 text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-2">
-                        <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
+                        <div className="w-14 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-slate-700 rounded-full"
                             style={{ width: `${Math.min(100, prog.collection_efficiency)}%` }}
                           ></div>
                         </div>
-                        <span className="text-xs font-bold text-slate-800 font-mono">{prog.collection_efficiency}%</span>
+                        <span className="text-[11px] font-bold text-slate-800 font-mono">{prog.collection_efficiency}%</span>
                       </div>
                     </td>
                   </tr>
@@ -665,24 +647,24 @@ export function FinancialReportsView() {
       {/* PRINTABLE OFFICIAL FINANCIAL STATEMENT MODAL */}
       {showPrintModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full border border-slate-200 overflow-hidden my-8 animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full border border-slate-200 overflow-hidden my-6 animate-in fade-in zoom-in-95">
             {/* Modal Controls Header */}
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between print:hidden">
-              <div className="flex items-center gap-2 font-semibold text-sm">
+            <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between print:hidden">
+              <div className="flex items-center gap-2 font-semibold text-xs">
                 <TrendingUp className="w-4 h-4 text-blue-400" />
                 <span>Audited Financial Statement — Fiscal Year {fiscalYear}</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handlePrint}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Print Document</span>
                 </button>
                 <button
                   onClick={() => setShowPrintModal(false)}
-                  className="px-3 py-1.5 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition cursor-pointer"
+                  className="px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition cursor-pointer"
                 >
                   Close
                 </button>
@@ -692,62 +674,55 @@ export function FinancialReportsView() {
             {/* Printable Institutional Layout */}
             <div className="p-8 text-slate-900 bg-white" id="printable-financial-statement">
               {/* Institutional Header */}
-              <div className="text-center border-b-2 border-slate-900 pb-5">
-                <div className="flex items-center justify-center gap-2.5 text-slate-900 font-extrabold text-2xl tracking-tight">
-                  <Building2 className="w-7 h-7 text-blue-700" />
+              <div className="text-center border-b-2 border-slate-900 pb-4">
+                <div className="flex items-center justify-center gap-2 text-slate-900 font-extrabold text-xl tracking-tight">
+                  <Building2 className="w-6 h-6 text-blue-700" />
                   <span>APEX HIGHER EDUCATION INSTITUTE</span>
                 </div>
-                <p className="text-xs uppercase font-bold tracking-wider text-slate-600 mt-1">
+                <p className="text-[11px] uppercase font-bold tracking-wider text-slate-600 mt-1">
                   Office of the Comptroller & Finance Treasury • Audited Accounts Department
                 </p>
-                <div className="mt-3.5 inline-block bg-slate-900 text-white text-xs font-bold uppercase tracking-widest px-4 py-1 rounded">
+                <div className="mt-3 inline-block bg-slate-900 text-white text-[11px] font-bold uppercase tracking-widest px-3 py-0.5 rounded">
                   OFFICIAL AUDITED STATEMENT OF FINANCIAL ACCOUNTS
                 </div>
               </div>
 
               {/* Statement Details */}
-              <div className="grid grid-cols-2 gap-4 my-5 text-xs">
+              <div className="grid grid-cols-2 gap-4 my-4 text-xs">
                 <div>
-                  <span className="font-bold text-slate-600 uppercase">Accounting Standard:</span>{' '}
-                  <span className="font-semibold text-slate-900">Indian GAAP / Higher Education Accounting Standards</span>
-                  <div className="mt-1">
-                    <span className="font-bold text-slate-600 uppercase">Fiscal Period:</span>{' '}
+                  <span className="font-bold text-slate-600 uppercase text-[11px]">Accounting Standard:</span>{' '}
+                  <span className="font-semibold text-slate-900">GAAP / Higher Education Standards</span>
+                  <div className="mt-0.5">
+                    <span className="font-bold text-slate-600 uppercase text-[11px]">Fiscal Period:</span>{' '}
                     <span className="font-semibold text-slate-900">01 April 2026 to 31 March 2027</span>
                   </div>
                 </div>
                 <div className="text-right">
                   <div>
-                    <span className="font-bold text-slate-600 uppercase">Verification Date:</span>{' '}
+                    <span className="font-bold text-slate-600 uppercase text-[11px]">Verification Date:</span>{' '}
                     <span className="font-medium text-slate-900">{new Date(reportData.as_of_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                   </div>
-                  <div className="mt-1">
-                    <span className="font-bold text-slate-600 uppercase">General Ledger Status:</span>{' '}
+                  <div className="mt-0.5">
+                    <span className="font-bold text-slate-600 uppercase text-[11px]">General Ledger Status:</span>{' '}
                     <span className="font-bold text-emerald-700">BALANCED & RECONCILED</span>
                   </div>
                 </div>
               </div>
 
               {/* Summary Statement Table */}
-              <div className="mb-6">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 border-b border-slate-300 pb-1 mb-2">
+              <div className="mb-4">
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-700 border-b border-slate-300 pb-1 mb-2">
                   Key Institutional Balances & Audit Extract
                 </h4>
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="bg-slate-100 font-bold border-b border-slate-300">
+                    <tr className="bg-slate-100 font-bold border-b border-slate-300 text-[11px]">
                       <th className="py-2 px-3">Financial Head</th>
                       <th className="py-2 px-3">Classification</th>
                       <th className="py-2 px-3 text-right">Amount (₹)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    <tr>
-                      <td className="py-2 px-3 font-semibold text-slate-900">Realized Tuition & Academic Revenue</td>
-                      <td className="py-2 px-3 text-slate-500">Core Fee Inflows</td>
-                      <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
-                        ₹{Number(summary.gross_revenue).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </td>
-                    </tr>
                     <tr>
                       <td className="py-2 px-3 font-semibold text-slate-900">Total Scheduled Student Milestone Demands</td>
                       <td className="py-2 px-3 text-slate-500">Annual Invoiced Value</td>
@@ -756,10 +731,10 @@ export function FinancialReportsView() {
                       </td>
                     </tr>
                     <tr>
-                      <td className="py-2 px-3 font-semibold text-slate-900">Institutional Cash & Bank Reserves</td>
-                      <td className="py-2 px-3 text-slate-500">Current Liquid Asset</td>
+                      <td className="py-2 px-3 font-semibold text-slate-900">Gross Realized Tuition & Academic Revenue</td>
+                      <td className="py-2 px-3 text-slate-500">Core Fee Inflows</td>
                       <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
-                        ₹{Number(summary.bank_balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        ₹{Number(summary.gross_revenue).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
                     <tr>
@@ -769,10 +744,17 @@ export function FinancialReportsView() {
                         ₹{Number(summary.outstanding_dues).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
+                    <tr>
+                      <td className="py-2 px-3 font-semibold text-slate-900">Institutional Cash & Bank Reserves</td>
+                      <td className="py-2 px-3 text-slate-500">Current Liquid Asset</td>
+                      <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
+                        ₹{Number(summary.bank_balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
                     <tr className="bg-slate-100 font-bold">
-                      <td className="py-2.5 px-3 font-bold text-slate-900">Net Balance Carried to Institutional Capital Fund</td>
-                      <td className="py-2.5 px-3 text-slate-600">Educational Fund</td>
-                      <td className="py-2.5 px-3 text-right font-mono font-extrabold text-slate-900">
+                      <td className="py-2 px-3 font-bold text-slate-900">Net Balance Carried to Institutional Capital Fund</td>
+                      <td className="py-2 px-3 text-slate-600">Educational Fund</td>
+                      <td className="py-2 px-3 text-right font-mono font-extrabold text-slate-900">
                         ₹{Number(summary.net_surplus).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
@@ -781,25 +763,25 @@ export function FinancialReportsView() {
               </div>
 
               {/* Statutory Exemption & Compliance Note */}
-              <div className="border border-slate-200 bg-slate-50 rounded-xl p-3 mb-6 text-[11px] text-slate-700">
+              <div className="border border-slate-200 bg-slate-50 rounded-lg p-2.5 mb-4 text-[11px] text-slate-700">
                 <span className="font-bold">Statutory Exemption Certificate:</span> All higher education tuition, laboratory subscriptions, and examination fees collected by Apex Higher Education Institute are exempt from GST under Notification No. 12/2017 - Central Tax (Rate), SAC Code 9992. Accounts maintained on Double-Entry System under GAAP standards.
               </div>
 
               {/* Signatures & Seal */}
-              <div className="grid grid-cols-3 gap-6 pt-6 border-t-2 border-slate-300 text-xs mt-6">
+              <div className="grid grid-cols-3 gap-6 pt-4 border-t-2 border-slate-300 text-xs mt-4">
                 <div>
                   <div className="font-semibold text-slate-700">Senior Accountant:</div>
-                  <div className="h-9 border-b border-dashed border-slate-300"></div>
+                  <div className="h-8 border-b border-dashed border-slate-300"></div>
                   <div className="text-[10px] text-slate-400 mt-1">Prepared by Finance Desk</div>
                 </div>
                 <div>
                   <div className="font-semibold text-slate-700">Finance Administrator:</div>
-                  <div className="h-9 border-b border-dashed border-slate-300"></div>
+                  <div className="h-8 border-b border-dashed border-slate-300"></div>
                   <div className="text-[10px] text-slate-400 mt-1">Institutional Treasurer</div>
                 </div>
                 <div className="text-right">
                   <div className="font-semibold text-slate-700">Comptroller / Statutory Auditor:</div>
-                  <div className="h-9 flex items-end justify-end">
+                  <div className="h-8 flex items-end justify-end">
                     <span className="font-mono text-slate-900 font-bold tracking-wider text-[10px] border border-slate-400 bg-slate-100 px-2 py-0.5 rounded">
                       AUDIT VERIFIED & SEALED
                     </span>
@@ -814,4 +796,5 @@ export function FinancialReportsView() {
     </div>
   );
 }
+
 export default FinancialReportsView;
