@@ -980,14 +980,7 @@ export function InvoicesReceiptsView() {
               >
                 Close Receipt
               </button>
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition cursor-pointer shadow-sm"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Print Receipt</span>
-              </button>
+              
             </div>
           </div>
         </div>
