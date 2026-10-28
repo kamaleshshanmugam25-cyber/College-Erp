@@ -99,6 +99,19 @@ export function InvoicesReceiptsView() {
   const [counterError, setCounterError] = useState(null);
   const [successToast, setSuccessToast] = useState(null);
 
+  // Keyboard shortcut: close modals on Escape
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedReceipt(null);
+        setSelectedInvoice(null);
+        setShowCounterModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -619,11 +632,11 @@ export function InvoicesReceiptsView() {
                       <td className="py-2.5 px-4 text-center whitespace-nowrap">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                          <span>Success</span>
+                          <span>Paid</span>
                         </span>
                       </td>
 
-                      {/* Action - Clean, Proportional Button */}
+                      {/* Action */}
                       <td className="py-2.5 px-4 text-center whitespace-nowrap">
                         <button
                           onClick={() => setSelectedReceipt(r)}
@@ -670,55 +683,50 @@ export function InvoicesReceiptsView() {
                   {filteredInvoices.map((inv) => (
                     <tr key={inv.id} className="hover:bg-slate-50/70 transition">
                       {/* Invoice Number */}
-                      <td className="py-2.5 px-4 font-mono font-semibold text-slate-900 whitespace-nowrap">
+                      <td className="py-2 px-4 font-mono font-semibold text-slate-900 whitespace-nowrap">
                         {inv.invoice_number}
                       </td>
 
                       {/* Student & Roll No */}
-                      <td className="py-2.5 px-4">
+                      <td className="py-2 px-4">
                         <div className="font-semibold text-slate-900">{inv.student_name}</div>
                         <div className="text-[11px] font-mono text-slate-500">{inv.roll_no}</div>
                       </td>
 
-                      {/* Course & Milestone */}
-                      <td className="py-2.5 px-4">
+                      {/* Course & Milestone - Clean 2-line structure without bulky bullets */}
+                      <td className="py-2 px-4">
                         <div className="font-medium text-slate-800">{inv.course_name}</div>
                         <div className="text-[11px] text-slate-500">
-                          {inv.installment_label} • <span className="capitalize">{inv.quota_name}</span>
+                          {inv.installment_label} • <span className="capitalize">{inv.quota_name || 'Merit'}</span>
                         </div>
                       </td>
 
                       {/* Due Date */}
-                      <td className="py-2.5 px-4 whitespace-nowrap">
+                      <td className="py-2 px-4 whitespace-nowrap">
                         <div className="text-slate-700 font-medium">
                           {new Date(inv.due_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </div>
-                        {inv.is_overdue && (
-                          <span className="inline-block text-[10px] font-semibold text-rose-700 bg-rose-50 px-1 py-0.5 rounded mt-0.5">
-                            Overdue
-                          </span>
-                        )}
                       </td>
 
                       {/* Invoiced Amount */}
-                      <td className="py-2.5 px-4 text-right font-mono font-medium text-slate-700 whitespace-nowrap">
+                      <td className="py-2 px-4 text-right font-mono font-medium text-slate-700 whitespace-nowrap">
                         ₹{Number(inv.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
 
                       {/* Paid Amount */}
-                      <td className="py-2.5 px-4 text-right font-mono font-medium text-emerald-700 whitespace-nowrap">
+                      <td className="py-2 px-4 text-right font-mono font-medium text-emerald-700 whitespace-nowrap">
                         ₹{Number(inv.paid_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
 
                       {/* Balance Due */}
-                      <td className="py-2.5 px-4 text-right font-mono font-bold whitespace-nowrap">
+                      <td className="py-2 px-4 text-right font-mono font-bold whitespace-nowrap">
                         <span className={inv.balance > 0 ? (inv.is_overdue ? 'text-rose-700' : 'text-amber-700') : 'text-slate-400'}>
                           ₹{Number(inv.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </span>
                       </td>
 
                       {/* Status */}
-                      <td className="py-2.5 px-4 text-center whitespace-nowrap">
+                      <td className="py-2 px-4 text-center whitespace-nowrap">
                         {inv.status === 'PAID' ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -742,14 +750,14 @@ export function InvoicesReceiptsView() {
                         )}
                       </td>
 
-                      {/* Actions - Clean, Compact Sizing */}
-                      <td className="py-2.5 px-4 text-center whitespace-nowrap">
+                      {/* Actions */}
+                      <td className="py-2 px-4 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1.5">
                           {inv.balance > 0 && (
                             <button
                               onClick={() => handleOpenCounterModal(inv)}
-                              className="px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition cursor-pointer"
-                              title="Record fee payment collection"
+                              className="px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition cursor-pointer shadow-sm"
+                              title="Record payment collection"
                             >
                               Collect
                             </button>
@@ -772,73 +780,83 @@ export function InvoicesReceiptsView() {
         )}
       </div>
 
-      {/* MODAL 1: Official Student Fee Receipt — STRICTLY NO CANCEL BUTTON */}
+      {/* MODAL 1: Official Student Fee Receipt — STRICTLY NO CANCEL BUTTON, ALWAYS VISIBLE TOP/BOTTOM CONTROLS */}
       {selectedReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden my-6 animate-in fade-in zoom-in-95">
-            {/* Modal Controls Header */}
-            <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between print:hidden">
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center items-start p-3 sm:p-6"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedReceipt(null);
+          }}
+        >
+          <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full border border-slate-200 my-4 sm:my-6 animate-in fade-in zoom-in-95 overflow-hidden">
+            {/* Sticky Top Header Bar — ALWAYS VISIBLE, NEVER CUT OFF */}
+            <div className="sticky top-0 z-20 p-3 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 print:hidden shadow-sm">
               <div className="flex items-center gap-2 font-semibold text-xs">
                 <Receipt className="w-4 h-4 text-blue-400" />
-                <span>Official Institutional Fee Receipt — {selectedReceipt.receipt_number}</span>
+                <span>Official Fee Receipt — {selectedReceipt.receipt_number}</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={handlePrint}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition cursor-pointer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition cursor-pointer shadow-sm"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Print Receipt</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setSelectedReceipt(null)}
-                  className="px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition cursor-pointer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-lg transition cursor-pointer border border-slate-700"
+                  title="Close receipt view"
                 >
-                  Close Receipt
+                  <X className="w-3.5 h-3.5" />
+                  <span>Close</span>
                 </button>
               </div>
             </div>
 
-            {/* Printable Institutional Receipt Layout */}
-            <div className="p-8 text-slate-900 bg-white" id="printable-receipt">
-              {/* Institution Header with Crest */}
-              <div className="text-center border-b-2 border-slate-900 pb-4">
-                <div className="flex items-center justify-center gap-2 text-slate-900 font-extrabold text-xl tracking-tight">
-                  <Building2 className="w-6 h-6 text-blue-700" />
+            {/* Printable Institutional Receipt Layout — Elegant & Audit-Grade */}
+            <div className="p-6 sm:p-8 text-slate-900 bg-white" id="printable-receipt">
+              {/* Institution Header with Clean Typography */}
+              <div className="text-center border-b border-slate-300 pb-4">
+                <div className="flex items-center justify-center gap-2 text-slate-900 font-extrabold text-lg sm:text-xl tracking-tight">
+                  <Building2 className="w-5 h-5 text-blue-700" />
                   <span>APEX HIGHER EDUCATION INSTITUTE</span>
                 </div>
-                <p className="text-[11px] uppercase font-bold tracking-wider text-slate-600 mt-1">
+                <p className="text-[11px] font-semibold tracking-wide text-slate-600 uppercase mt-0.5">
                   Office of the Comptroller of Accounts & Student Treasury
                 </p>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-[10px] text-slate-400 mt-0.5">
                   Institutional Campus • Approved by Higher Education Authority • Affiliated Institution
                 </p>
-                <div className="mt-3 inline-block bg-slate-900 text-white text-[11px] font-bold uppercase tracking-widest px-3 py-0.5 rounded">
-                  OFFICIAL STUDENT FEE RECEIPT
+
+                <div className="mt-2.5 inline-block border border-slate-900 px-3 py-0.5 text-slate-900 text-[11px] font-bold uppercase tracking-wider rounded">
+                  Official Student Fee Receipt
                 </div>
               </div>
 
-              {/* Receipt Metadata Grid */}
-              <div className="grid grid-cols-2 gap-4 my-4 text-xs">
+              {/* Receipt Reference Grid */}
+              <div className="grid grid-cols-2 gap-3 my-4 py-2 border-b border-slate-200 text-xs">
                 <div className="space-y-1">
                   <div>
-                    <span className="font-bold text-slate-500 uppercase text-[11px]">Receipt Number:</span>{' '}
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Receipt No: </span>
                     <span className="font-mono font-bold text-slate-900">{selectedReceipt.receipt_number}</span>
                   </div>
                   <div>
-                    <span className="font-bold text-slate-500 uppercase text-[11px]">Order / Txn ID:</span>{' '}
-                    <span className="font-mono text-slate-700">{selectedReceipt.order_id || '—'}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Txn / Ref ID: </span>
+                    <span className="font-mono text-slate-700">{selectedReceipt.order_id || selectedReceipt.gateway_txn_id || '—'}</span>
                   </div>
                   <div>
-                    <span className="font-bold text-slate-500 uppercase text-[11px]">Payment Channel:</span>{' '}
-                    <span className="font-bold text-slate-900 uppercase">{selectedReceipt.method || 'CASH / UPI'}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Payment Channel: </span>
+                    <span className="font-bold text-slate-900 uppercase">{selectedReceipt.method || 'CASH'}</span>
                   </div>
                 </div>
 
                 <div className="space-y-1 text-right">
                   <div>
-                    <span className="font-bold text-slate-500 uppercase text-[11px]">Date & Timestamp:</span>{' '}
-                    <span className="font-semibold text-slate-900">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Date & Time: </span>
+                    <span className="font-medium text-slate-900">
                       {new Date(selectedReceipt.timestamp).toLocaleString('en-IN', {
                         day: '2-digit',
                         month: 'short',
@@ -849,89 +867,91 @@ export function InvoicesReceiptsView() {
                     </span>
                   </div>
                   <div>
-                    <span className="font-bold text-slate-500 uppercase text-[11px]">Academic Year:</span>{' '}
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Academic Year: </span>
                     <span className="font-bold text-slate-900">{selectedReceipt.academic_year || '2026-27'}</span>
                   </div>
                   <div>
-                    <span className="font-bold text-slate-500 uppercase text-[11px]">Status:</span>{' '}
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Status: </span>
                     <span className="font-bold text-emerald-700">PAID & SETTLED</span>
                   </div>
                 </div>
               </div>
 
-              {/* Student Identification Box */}
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-4 text-xs">
-                <div className="grid grid-cols-2 gap-2">
+              {/* Student Details Section — Clean, non-boxy presentation */}
+              <div className="my-3 text-xs">
+                <div className="grid grid-cols-2 gap-2 bg-slate-50 border border-slate-200 rounded-lg p-3">
                   <div>
-                    <div className="text-[10px] text-slate-500 font-semibold uppercase">Student Full Name</div>
-                    <div className="font-bold text-slate-900 text-sm">{selectedReceipt.student_name}</div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase">Student Name</div>
+                    <div className="font-bold text-slate-900 text-sm mt-0.5">{selectedReceipt.student_name}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-slate-500 font-semibold uppercase">Register / Roll Number</div>
-                    <div className="font-mono font-bold text-slate-900 text-sm">{selectedReceipt.roll_no}</div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase">Roll / Register No</div>
+                    <div className="font-mono font-bold text-slate-900 text-sm mt-0.5">{selectedReceipt.roll_no}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-slate-500 font-semibold uppercase">Academic Program</div>
-                    <div className="font-semibold text-slate-800">{selectedReceipt.course_name} ({selectedReceipt.course_code})</div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase">Academic Program</div>
+                    <div className="font-medium text-slate-800">{selectedReceipt.course_name} ({selectedReceipt.course_code})</div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-slate-500 font-semibold uppercase">Bank / Audit Reference</div>
-                    <div className="font-mono text-slate-700">{selectedReceipt.gateway_txn_id || selectedReceipt.order_id || 'Verified Counter Slip'}</div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase">Audit Description</div>
+                    <div className="text-slate-600 truncate">{selectedReceipt.gateway_txn_id || 'Counter Collection Fee Desk'}</div>
                   </div>
                 </div>
               </div>
 
-              {/* Fee Particulars Table */}
-              <table className="w-full text-left border-collapse text-xs mb-4">
-                <thead>
-                  <tr className="border-b-2 border-slate-900 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
-                    <th className="py-2">Particulars / Description</th>
-                    <th className="py-2 text-center">SAC Code</th>
-                    <th className="py-2 text-center">GST Rate</th>
-                    <th className="py-2 text-right">Amount (₹)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  <tr>
-                    <td className="py-2.5">
-                      <div className="font-bold text-slate-900">Tuition & Academic Program Fee</div>
-                      <div className="text-slate-500 text-[11px]">Scheduled milestone fee recovery for {selectedReceipt.course_name}</div>
-                    </td>
-                    <td className="py-2.5 text-center font-mono text-slate-700">9992</td>
-                    <td className="py-2.5 text-center font-medium text-slate-700">0% (Exempt)</td>
-                    <td className="py-2.5 text-right font-mono font-bold text-slate-900">
-                      ₹{Number(selectedReceipt.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-slate-900 font-bold">
-                    <td colSpan="3" className="py-2.5 text-right uppercase tracking-wider text-slate-900 text-xs">
-                      Total Realized Amount:
-                    </td>
-                    <td className="py-2.5 text-right font-mono text-slate-900 text-sm font-extrabold">
-                      ₹{Number(selectedReceipt.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
+              {/* Particulars Table */}
+              <div className="my-4">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b-2 border-slate-900 text-slate-700 font-bold uppercase tracking-wider text-[10px]">
+                      <th className="py-2">Fee Particulars</th>
+                      <th className="py-2 text-center">SAC Code</th>
+                      <th className="py-2 text-center">GST Rate</th>
+                      <th className="py-2 text-right">Amount (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    <tr>
+                      <td className="py-2.5">
+                        <div className="font-bold text-slate-900">Tuition & Academic Program Fee</div>
+                        <div className="text-slate-500 text-[10px]">Milestone tuition collection for {selectedReceipt.course_name}</div>
+                      </td>
+                      <td className="py-2.5 text-center font-mono text-slate-700">9992</td>
+                      <td className="py-2.5 text-center font-medium text-slate-700">0% (Exempt)</td>
+                      <td className="py-2.5 text-right font-mono font-bold text-slate-900 text-sm">
+                        ₹{Number(selectedReceipt.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-slate-900 font-bold">
+                      <td colSpan="3" className="py-2.5 text-right uppercase tracking-wider text-slate-900 text-xs">
+                        Total Amount Received:
+                      </td>
+                      <td className="py-2.5 text-right font-mono text-slate-900 text-base font-extrabold">
+                        ₹{Number(selectedReceipt.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
 
               {/* Amount in Words */}
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 mb-4 text-xs">
-                <span className="font-bold text-slate-700 uppercase text-[11px]">Amount in Words: </span>
+              <div className="bg-slate-50 border-l-2 border-slate-800 p-2.5 my-3 text-xs">
+                <span className="font-bold text-slate-700">Amount in Words: </span>
                 <span className="font-semibold text-slate-900 italic">
                   {numberToWordsINR(selectedReceipt.amount)}
                 </span>
               </div>
 
-              {/* Statutory Exemption Notice */}
-              <div className="border border-slate-200 bg-slate-50 rounded-lg p-2.5 mb-4 text-[11px] text-slate-600">
-                <span className="font-bold text-slate-800">Statutory GST Exemption: </span>
-                Educational services and tuition fees are fully exempt from GST under Notification No. 12/2017 - Central Tax (Rate), SAC Code 9992. Accounts maintained on Double-Entry System.
+              {/* Statutory Exemption Declaration */}
+              <div className="border border-slate-200 rounded p-2.5 my-3 text-[10px] text-slate-600 bg-slate-50/50">
+                <span className="font-bold text-slate-800">Statutory Notice: </span>
+                Educational services and tuition fees are exempt from Goods & Services Tax under Notification No. 12/2017 - Central Tax (Rate), SAC Code 9992. Accounts maintained on Double-Entry Accounting System.
               </div>
 
-              {/* Signatures */}
-              <div className="grid grid-cols-2 gap-8 pt-3 mt-3 border-t border-slate-200 text-xs">
+              {/* Signatures & Seal */}
+              <div className="grid grid-cols-2 gap-8 pt-4 mt-4 border-t border-slate-200 text-xs">
                 <div>
                   <div className="font-semibold text-slate-700">Depositor Signature:</div>
                   <div className="h-8 border-b border-dashed border-slate-300"></div>
@@ -939,8 +959,8 @@ export function InvoicesReceiptsView() {
                 <div className="text-right">
                   <div className="font-semibold text-slate-700">Authorized Cashier:</div>
                   <div className="h-8 flex items-end justify-end">
-                    <span className="font-mono text-slate-900 font-bold text-[10px] border border-slate-300 bg-slate-100 px-2 py-0.5 rounded">
-                      VERIFIED BY APEX ERP TREASURY
+                    <span className="font-mono text-slate-900 font-bold text-[9px] border border-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                      DIGITALLY AUDITED & VERIFIED
                     </span>
                   </div>
                 </div>
@@ -950,65 +970,92 @@ export function InvoicesReceiptsView() {
                 Computer-generated official receipt. Valid without physical signature when authenticated with transaction reference.
               </div>
             </div>
+
+            {/* Bottom Modal Actions Bar — ALWAYS VISIBLE, NEVER TRAPS USER */}
+            <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2 print:hidden">
+              <button
+                type="button"
+                onClick={() => setSelectedReceipt(null)}
+                className="px-3.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+              >
+                Close Receipt
+              </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition cursor-pointer shadow-sm"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Receipt</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* MODAL 2: Demand Invoice Preview & Print */}
       {selectedInvoice && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden my-6 animate-in fade-in zoom-in-95">
-            {/* Modal Controls Header */}
-            <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between print:hidden">
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center items-start p-3 sm:p-6"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedInvoice(null);
+          }}
+        >
+          <div className="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full border border-slate-200 my-4 sm:my-6 animate-in fade-in zoom-in-95 overflow-hidden">
+            {/* Sticky Header Bar */}
+            <div className="sticky top-0 z-20 p-3 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 print:hidden shadow-sm">
               <div className="flex items-center gap-2 font-semibold text-xs">
                 <FileText className="w-4 h-4 text-blue-400" />
                 <span>Demand Invoice Notice — {selectedInvoice.invoice_number}</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={handlePrint}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition cursor-pointer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition cursor-pointer shadow-sm"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Print Note</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setSelectedInvoice(null)}
-                  className="px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition cursor-pointer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-lg transition cursor-pointer border border-slate-700"
                 >
-                  Close
+                  <X className="w-3.5 h-3.5" />
+                  <span>Close</span>
                 </button>
               </div>
             </div>
 
             {/* Printable Demand Notice Layout */}
-            <div className="p-8 text-slate-900 bg-white">
-              <div className="text-center border-b-2 border-slate-900 pb-4">
-                <div className="flex items-center justify-center gap-2 text-slate-900 font-extrabold text-xl tracking-tight">
-                  <Building2 className="w-6 h-6 text-blue-700" />
+            <div className="p-6 sm:p-8 text-slate-900 bg-white">
+              <div className="text-center border-b border-slate-300 pb-4">
+                <div className="flex items-center justify-center gap-2 text-slate-900 font-extrabold text-lg sm:text-xl tracking-tight">
+                  <Building2 className="w-5 h-5 text-blue-700" />
                   <span>APEX HIGHER EDUCATION INSTITUTE</span>
                 </div>
-                <p className="text-[11px] uppercase font-bold tracking-wider text-slate-600 mt-1">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 mt-0.5">
                   Office of Student Accounts & Finance Treasury
                 </p>
-                <div className="mt-3 inline-block bg-slate-900 text-white text-[11px] font-bold uppercase tracking-widest px-3 py-0.5 rounded">
-                  FEE DEMAND NOTICE / INVOICE
+                <div className="mt-2.5 inline-block border border-slate-900 px-3 py-0.5 text-slate-900 text-[11px] font-bold uppercase tracking-wider rounded">
+                  Fee Demand Notice / Invoice
                 </div>
               </div>
 
               {/* Demand Details */}
-              <div className="grid grid-cols-2 gap-4 my-4 text-xs">
+              <div className="grid grid-cols-2 gap-3 my-4 py-2 border-b border-slate-200 text-xs">
                 <div>
-                  <span className="font-bold text-slate-500 uppercase text-[11px]">Demand Invoice #:</span>{' '}
+                  <span className="font-bold text-slate-400 uppercase text-[10px]">Demand Invoice #:</span>{' '}
                   <span className="font-mono font-bold text-slate-900">{selectedInvoice.invoice_number}</span>
                   <div className="mt-0.5">
-                    <span className="font-bold text-slate-500 uppercase text-[11px]">Milestone:</span>{' '}
+                    <span className="font-bold text-slate-400 uppercase text-[10px]">Milestone:</span>{' '}
                     <span className="font-semibold text-slate-900">{selectedInvoice.installment_label}</span>
                   </div>
                 </div>
                 <div className="text-right">
                   <div>
-                    <span className="font-bold text-slate-500 uppercase text-[11px]">Due Date:</span>{' '}
+                    <span className="font-bold text-slate-400 uppercase text-[10px]">Due Date:</span>{' '}
                     <span className={`font-bold ${selectedInvoice.is_overdue ? 'text-rose-700' : 'text-slate-900'}`}>
                       {new Date(selectedInvoice.due_date).toLocaleDateString('en-IN', {
                         day: '2-digit',
@@ -1018,97 +1065,108 @@ export function InvoicesReceiptsView() {
                     </span>
                   </div>
                   <div className="mt-0.5">
-                    <span className="font-bold text-slate-500 uppercase text-[11px]">Status:</span>{' '}
+                    <span className="font-bold text-slate-400 uppercase text-[10px]">Status:</span>{' '}
                     <span className="font-bold text-slate-900">{selectedInvoice.status}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Student Info Box */}
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-4 text-xs">
+              {/* Student Info */}
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 my-3 text-xs">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <div className="text-[10px] text-slate-500 font-semibold uppercase">Student Name</div>
-                    <div className="font-bold text-slate-900 text-sm">{selectedInvoice.student_name}</div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase">Student Name</div>
+                    <div className="font-bold text-slate-900 text-sm mt-0.5">{selectedInvoice.student_name}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-slate-500 font-semibold uppercase">Roll / Register No.</div>
-                    <div className="font-mono font-bold text-slate-900 text-sm">{selectedInvoice.roll_no}</div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase">Roll / Register No</div>
+                    <div className="font-mono font-bold text-slate-900 text-sm mt-0.5">{selectedInvoice.roll_no}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-slate-500 font-semibold uppercase">Academic Program</div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase">Academic Program</div>
                     <div className="font-medium text-slate-800">{selectedInvoice.course_name} ({selectedInvoice.course_code})</div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-slate-500 font-semibold uppercase">Quota Category</div>
-                    <div className="font-medium text-slate-800 capitalize">{selectedInvoice.quota_name}</div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase">Quota Category</div>
+                    <div className="font-medium text-slate-800 capitalize">{selectedInvoice.quota_name || 'Merit'}</div>
                   </div>
                 </div>
               </div>
 
               {/* Breakdown Table */}
-              <table className="w-full text-left border-collapse text-xs mb-4">
-                <thead>
-                  <tr className="border-b-2 border-slate-900 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
-                    <th className="py-2">Milestone Description</th>
-                    <th className="py-2 text-right">Invoiced (₹)</th>
-                    <th className="py-2 text-right">Paid (₹)</th>
-                    <th className="py-2 text-right">Balance Due (₹)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  <tr>
-                    <td className="py-2.5">
-                      <div className="font-bold text-slate-900">Tuition & Institutional Development Fee</div>
-                      <div className="text-slate-500 text-[11px]">Scheduled {selectedInvoice.installment_label} for AY {selectedInvoice.academic_year}</div>
-                    </td>
-                    <td className="py-2.5 text-right font-mono font-medium text-slate-800">
-                      ₹{Number(selectedInvoice.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="py-2.5 text-right font-mono font-medium text-emerald-700">
-                      ₹{Number(selectedInvoice.paid_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="py-2.5 text-right font-mono font-bold text-amber-700">
-                      ₹{Number(selectedInvoice.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-slate-900 font-bold text-xs">
-                    <td colSpan="3" className="py-2.5 text-right text-slate-900 uppercase tracking-wider">
-                      Net Balance Dues:
-                    </td>
-                    <td className="py-2.5 text-right font-mono text-rose-700 text-sm font-extrabold">
-                      ₹{Number(selectedInvoice.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
+              <div className="my-4">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b-2 border-slate-900 text-slate-700 font-bold uppercase tracking-wider text-[10px]">
+                      <th className="py-2">Milestone Description</th>
+                      <th className="py-2 text-right">Invoiced (₹)</th>
+                      <th className="py-2 text-right">Paid (₹)</th>
+                      <th className="py-2 text-right">Balance Due (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    <tr>
+                      <td className="py-2.5">
+                        <div className="font-bold text-slate-900">Tuition & Institutional Development Fee</div>
+                        <div className="text-slate-500 text-[10px]">Scheduled {selectedInvoice.installment_label} for AY {selectedInvoice.academic_year}</div>
+                      </td>
+                      <td className="py-2.5 text-right font-mono font-medium text-slate-800">
+                        ₹{Number(selectedInvoice.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-2.5 text-right font-mono font-medium text-emerald-700">
+                        ₹{Number(selectedInvoice.paid_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-2.5 text-right font-mono font-bold text-amber-700">
+                        ₹{Number(selectedInvoice.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-slate-900 font-bold text-xs">
+                      <td colSpan="3" className="py-2.5 text-right text-slate-900 uppercase tracking-wider">
+                        Net Balance Dues:
+                      </td>
+                      <td className="py-2.5 text-right font-mono text-rose-700 text-sm font-extrabold">
+                        ₹{Number(selectedInvoice.balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
 
-              {/* Payment Channels Info */}
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-4 text-xs text-slate-700 space-y-1">
-                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+              {/* Payment Instructions */}
+              <div className="bg-slate-50 border border-slate-200 rounded p-2.5 text-xs text-slate-700 space-y-0.5">
+                <div className="font-bold text-slate-900 flex items-center gap-1.5 text-[11px]">
                   <Landmark className="w-3.5 h-3.5 text-blue-700" />
                   <span>Approved Payment Options:</span>
                 </div>
-                <div>1. Campus Front Desk: Cashier counter via UPI QR, Net Banking, Card, or Cash.</div>
-                <div>2. Institutional Bank Transfer: State Bank of India, A/C: 50200038912844, IFSC: SBIN0004210.</div>
+                <div className="text-[11px]">1. Campus Front Desk: Cashier counter via UPI QR, Net Banking, Card, or Cash.</div>
+                <div className="text-[11px]">2. Institutional Bank Transfer: State Bank of India, A/C: 50200038912844, IFSC: SBIN0004210.</div>
               </div>
+            </div>
 
+            {/* Bottom Actions Bar */}
+            <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2 print:hidden">
+              <button
+                type="button"
+                onClick={() => setSelectedInvoice(null)}
+                className="px-3.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+              >
+                Close
+              </button>
               {selectedInvoice.balance > 0 && (
-                <div className="flex justify-end gap-2 print:hidden pt-2">
-                  <button
-                    onClick={() => {
-                      const inv = selectedInvoice;
-                      setSelectedInvoice(null);
-                      handleOpenCounterModal(inv);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Collect Payment for Demand</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const inv = selectedInvoice;
+                    setSelectedInvoice(null);
+                    handleOpenCounterModal(inv);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition cursor-pointer shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Collect Payment</span>
+                </button>
               )}
             </div>
           </div>
@@ -1117,29 +1175,36 @@ export function InvoicesReceiptsView() {
 
       {/* MODAL 3: Counter Fee Collection with Scanner, Bank Details & Card Input */}
       {showCounterModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden my-6 animate-in fade-in zoom-in-95">
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex justify-center items-start p-3 sm:p-6"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowCounterModal(false);
+          }}
+        >
+          <div className="relative bg-white rounded-xl shadow-2xl max-w-lg w-full border border-slate-200 my-4 sm:my-6 animate-in fade-in zoom-in-95 overflow-hidden">
             {/* Modal Header */}
-            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+            <div className="sticky top-0 z-20 p-3 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shadow-sm">
               <div className="flex items-center gap-2">
                 <Plus className="w-4 h-4 text-blue-400" />
                 <div>
-                  <h3 className="font-bold text-white text-sm">Record Fee Collection</h3>
-                  <p className="text-[11px] text-slate-300">Collect student tuition fee & generate receipt</p>
+                  <h3 className="font-bold text-white text-xs">Record Fee Collection</h3>
+                  <p className="text-[10px] text-slate-300">Collect tuition fee & generate official receipt</p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setShowCounterModal(false)}
                 className="p-1 text-slate-400 hover:text-white rounded-lg transition cursor-pointer"
+                title="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleRecordCollection} className="p-5 space-y-3.5 text-xs">
+            <form onSubmit={handleRecordCollection} className="p-4 sm:p-5 space-y-3 text-xs">
               {counterError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs flex items-center gap-2">
+                <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
                   <span>{counterError}</span>
                 </div>
@@ -1153,7 +1218,7 @@ export function InvoicesReceiptsView() {
                 <select
                   value={counterForm.installment_id}
                   onChange={(e) => handleInstallmentSelect(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 font-medium"
+                  className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 font-medium"
                   required
                 >
                   <option value="">-- Choose Student Demand --</option>
@@ -1199,7 +1264,7 @@ export function InvoicesReceiptsView() {
                     placeholder="Enter collection amount"
                     value={counterForm.amount}
                     onChange={(e) => setCounterForm({ ...counterForm, amount: e.target.value })}
-                    className="w-full pl-7 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono font-bold text-slate-900"
+                    className="w-full pl-7 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono font-bold text-slate-900"
                     required
                   />
                 </div>
@@ -1254,7 +1319,6 @@ export function InvoicesReceiptsView() {
                   </div>
 
                   <div className="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-slate-200">
-                    {/* Visual QR Code Representation */}
                     <div className="w-20 h-20 bg-slate-900 text-white rounded p-1.5 flex flex-col items-center justify-center relative shadow-sm shrink-0">
                       <svg viewBox="0 0 100 100" className="w-full h-full text-white fill-current">
                         <rect x="0" y="0" width="30" height="30" fill="white" />
@@ -1304,7 +1368,7 @@ export function InvoicesReceiptsView() {
                         Scan with GPay, PhonePe, Paytm, BHIM, Cred
                       </div>
                       <div className="font-semibold text-blue-700 text-xs">
-                        Amount to Collect: ₹{Number(counterForm.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        Amount: ₹{Number(counterForm.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </div>
                     </div>
                   </div>
@@ -1497,7 +1561,7 @@ export function InvoicesReceiptsView() {
                 </div>
               )}
 
-              {/* Form Action Buttons - Compact & Balanced */}
+              {/* Form Action Buttons */}
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
                 <button
                   type="button"
