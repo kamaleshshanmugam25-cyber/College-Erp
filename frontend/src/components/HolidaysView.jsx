@@ -20,6 +20,7 @@ export function HolidaysView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successToast, setSuccessToast] = useState(null);
+  const [declaredHolidayNotification, setDeclaredHolidayNotification] = useState(null);
   const [showAllHolidays, setShowAllHolidays] = useState(false);
 
   // Filters
@@ -63,6 +64,7 @@ export function HolidaysView() {
       return;
     }
     setSubmitting(true);
+    setError(null);
     try {
       await api.createHoliday({
         name: form.name.trim(),
@@ -71,11 +73,30 @@ export function HolidaysView() {
         description: form.description.trim(),
       });
       const holidayName = form.name.trim();
+      const holidayDate = form.date;
+      const holidayType = form.holiday_type;
+      const holidayDesc = form.description.trim();
+
+      const typeLabelMap = {
+        NATIONAL: 'National Holiday',
+        FESTIVAL: 'Public Festival / Holiday',
+        ACADEMIC: 'Academic Break / Recess',
+        RESTRICTED: 'Restricted Holiday',
+      };
+
       setShowAddModal(false);
       setForm({ name: '', date: '', holiday_type: 'FESTIVAL', description: '' });
       await loadHolidays();
+
+      setDeclaredHolidayNotification({
+        name: holidayName,
+        date: holidayDate,
+        type: typeLabelMap[holidayType] || holidayType,
+        description: holidayDesc,
+      });
+
       setSuccessToast(`Holiday "${holidayName}" declared successfully!`);
-      setTimeout(() => setSuccessToast(null), 4000);
+      setTimeout(() => setSuccessToast(null), 5000);
     } catch (err) {
       setError(`Failed to declare holiday: ${err.message}`);
     } finally {
@@ -147,6 +168,40 @@ export function HolidaysView() {
           </button>
         )}
       </div>
+
+      {/* Official Declared Holiday Notification Banner */}
+      {declaredHolidayNotification && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 text-xs flex items-start sm:items-center justify-between gap-3 shadow-xs animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0 text-emerald-700">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-emerald-950 text-sm">
+                  Official Holiday Circular: {declaredHolidayNotification.name}
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-200/80 text-emerald-800 text-[10px] font-bold uppercase tracking-wider">
+                  New Declaration
+                </span>
+              </div>
+              <p className="text-emerald-800 text-xs">
+                Scheduled for <strong className="text-emerald-950">{declaredHolidayNotification.date}</strong> ({declaredHolidayNotification.type}). Academic calendar, student schedule, and staff attendance have been updated.
+                {declaredHolidayNotification.description && (
+                  <span className="italic ml-1">"{declaredHolidayNotification.description}"</span>
+                )}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setDeclaredHolidayNotification(null)}
+            className="text-emerald-600 hover:text-emerald-900 p-1.5 rounded-lg hover:bg-emerald-100 transition cursor-pointer shrink-0"
+            title="Dismiss notice"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center justify-between gap-2">
