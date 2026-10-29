@@ -195,7 +195,10 @@ class LeaveViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Retrie
     def perform_create(self, serializer):
         emp = getattr(self.request.user, "employee_profile", None)
         if emp is None:
-            raise PermissionDenied("No employee profile for this account.")
+            if self.request.user.is_superuser or getattr(getattr(self.request.user, "erp_profile", None), "role", None) in [Roles.SUPER_ADMIN, Roles.HR_ADMIN]:
+                emp = Employee.objects.filter(user=self.request.user).first() or Employee.objects.first()
+            if emp is None:
+                raise PermissionDenied("No employee profile for this account.")
         serializer.save(employee=emp)  # employee is taken from the session, never from the payload
 
     def _decide(self, request, approve):
