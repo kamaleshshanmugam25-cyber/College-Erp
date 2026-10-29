@@ -4,6 +4,7 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.utils import timezone
 from rest_framework import serializers, viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -54,7 +55,12 @@ class JournalVoucherSerializer(serializers.ModelSerializer):
 
 class GeneralLedgerViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = GeneralLedgerSerializer
-    permission_classes = []
+    permission_classes = [IsAuthenticated, RoleActionPermission]
+    action_roles = {
+        "list": (Roles.SUPER_ADMIN, Roles.FINANCE_ADMIN, Roles.ACCOUNTANT, Roles.FINANCE_USER),
+        "retrieve": (Roles.SUPER_ADMIN, Roles.FINANCE_ADMIN, Roles.ACCOUNTANT, Roles.FINANCE_USER),
+        "account_balances": (Roles.SUPER_ADMIN, Roles.FINANCE_ADMIN, Roles.ACCOUNTANT, Roles.FINANCE_USER),
+    }
 
     def get_queryset(self):
         qs = GeneralLedger.objects.select_related("voucher").all()
@@ -86,7 +92,15 @@ class GeneralLedgerViewSet(viewsets.ReadOnlyModelViewSet):
 class JournalVoucherViewSet(viewsets.ModelViewSet):
     queryset = JournalVoucher.objects.prefetch_related("lines").all().order_by("-date", "-id")
     serializer_class = JournalVoucherSerializer
-    permission_classes = []
+    permission_classes = [IsAuthenticated, RoleActionPermission]
+    action_roles = {
+        "list": (Roles.SUPER_ADMIN, Roles.FINANCE_ADMIN, Roles.ACCOUNTANT, Roles.FINANCE_USER),
+        "retrieve": (Roles.SUPER_ADMIN, Roles.FINANCE_ADMIN, Roles.ACCOUNTANT, Roles.FINANCE_USER),
+        "create": (Roles.SUPER_ADMIN, Roles.FINANCE_ADMIN, Roles.ACCOUNTANT),
+        "update": (Roles.SUPER_ADMIN, Roles.FINANCE_ADMIN),
+        "partial_update": (Roles.SUPER_ADMIN, Roles.FINANCE_ADMIN),
+        "destroy": (Roles.SUPER_ADMIN,),
+    }
 
 
     def create(self, request, *args, **kwargs):

@@ -197,7 +197,16 @@ function MainApp() {
         }
         return <RolePermissionView />;
       case 'audit-logs':
-        return <FinanceDashboard />;
+        if (!isSuper && !isAdmin && !canAccessModule('audit-logs')) {
+          return (
+            <AccessDeniedView
+              requiredRole="Super Admin or Finance Admin"
+              reason="System Audit Logs are restricted to authorized administrators."
+              onGoHome={() => handleTabChange('finance-dashboard')}
+            />
+          );
+        }
+        return <AuditLogsView />;
       case 'student-details':
       case 'student-portal':
         return <StudentPortal />;

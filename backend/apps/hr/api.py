@@ -281,10 +281,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         "bulk_upload": (Roles.HR_ADMIN, Roles.SUPER_ADMIN),
     }
 
-    def get_permissions(self):
-        if self.action in ["appraisals"]:
-            return []
-        return [permission() for permission in self.permission_classes]
+
 
 
     def get_queryset(self):
@@ -673,7 +670,15 @@ class HolidaySerializer(serializers.ModelSerializer):
 class HolidayViewSet(viewsets.ModelViewSet):
     queryset = Holiday.objects.all().order_by("date")
     serializer_class = HolidaySerializer
-    permission_classes = []
+    permission_classes = [RoleActionPermission]
+    action_roles = {
+        "list": None,
+        "retrieve": None,
+        "create": (Roles.HR_ADMIN, Roles.SUPER_ADMIN),
+        "update": (Roles.HR_ADMIN, Roles.SUPER_ADMIN),
+        "partial_update": (Roles.HR_ADMIN, Roles.SUPER_ADMIN),
+        "destroy": (Roles.HR_ADMIN, Roles.SUPER_ADMIN),
+    }
 
 
 

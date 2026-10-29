@@ -226,6 +226,10 @@ def login_api(request):
     user = None
 
     if demo_role and not password:
+        from django.conf import settings
+        import os
+        if not (settings.DEBUG and os.environ.get('ALLOW_DEMO_LOGIN', '0') == '1'):
+            return JsonResponse({'error': 'Password authentication is required.'}, status=400)
         from django.contrib.auth.models import Group
         if demo_role == Roles.SUPER_ADMIN:
             user = User.objects.filter(is_superuser=True).first()
