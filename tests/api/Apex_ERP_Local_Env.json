@@ -1,0 +1,93 @@
+{
+  "id": "apex-erp-local-env",
+  "name": "Apex ERP Local Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "adminUser",
+      "value": "admin",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "adminPass",
+      "value": "password123",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "finUser",
+      "value": "finance",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "finPass",
+      "value": "password123",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "hrUser",
+      "value": "HrAdmin",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "hrPass",
+      "value": "password123",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "studentUser",
+      "value": "student",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "studentPass",
+      "value": "password123",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "csrfToken",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "newHolidayId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testInstallmentId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "courseId",
+      "value": "1",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "quotaId",
+      "value": "2",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2026-10-29T17:10:00.000Z",
+  "_postman_exported_using": "Apex ERP QA Architecture Generator"
+}
