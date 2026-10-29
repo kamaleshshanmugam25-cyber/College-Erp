@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
@@ -19,6 +20,37 @@ import {
 
 export function Sidebar({ activeTab, setActiveTab }) {
   const { hasRole, canAccessModule } = useAuth();
+  const [holidayCount, setHolidayCount] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchHolidayCount = async () => {
+      try {
+        const res = await api.getHolidays();
+        const count = res?.count ?? (Array.isArray(res) ? res.length : (res?.results?.length ?? 0));
+        if (isMounted) setHolidayCount(count);
+      } catch (err) {
+        // fallback
+      }
+    };
+
+    fetchHolidayCount();
+
+    const handleHolidayUpdate = (e) => {
+      if (e?.detail?.count !== undefined) {
+        setHolidayCount(e.detail.count);
+      } else {
+        fetchHolidayCount();
+      }
+    };
+
+    window.addEventListener('holidays_updated', handleHolidayUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('holidays_updated', handleHolidayUpdate);
+    };
+  }, []);
+
   const isSuper = hasRole('Super Admin');
   const isAdmin = hasRole('Super Admin', 'Finance Admin');
   const isHR = isSuper || hasRole('HR Admin');
@@ -51,7 +83,11 @@ export function Sidebar({ activeTab, setActiveTab }) {
       items: [
         { id: 'employee-lifecycle', label: 'Employee Lifecycle', icon: Users },
         { id: 'attendance-leaves', label: 'Attendance & Leaves', icon: CalendarCheck2 },
-        { id: 'holidays', label: 'Declared Holidays', icon: Calendar },
+        {
+          id: 'holidays',
+          label: `Declared Holidays${holidayCount !== null ? ` (${holidayCount})` : ''}`,
+          icon: Calendar
+        },
         { id: 'performance-appraisal', label: 'Performance Appraisals', icon: TrendingUp },
       ],
     },
@@ -61,7 +97,11 @@ export function Sidebar({ activeTab, setActiveTab }) {
       items: [
         { id: 'student-portal', label: 'My Dues & Receipts', icon: Receipt },
         { id: 'student-scholarships', label: 'Scholarships & Concessions', icon: Award },
-        { id: 'academic-calendar', label: 'Academic Holiday Calendar', icon: Calendar },
+        {
+          id: 'academic-calendar',
+          label: `Academic Holiday Calendar${holidayCount !== null ? ` (${holidayCount})` : ''}`,
+          icon: Calendar
+        },
       ],
     },
     {
@@ -136,3 +176,4 @@ export function Sidebar({ activeTab, setActiveTab }) {
     </aside>
   );
 }
+export default Sidebar;

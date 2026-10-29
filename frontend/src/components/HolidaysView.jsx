@@ -9,7 +9,9 @@ import {
   AlertCircle,
   X,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Trash2,
+  CheckCircle2
 } from 'lucide-react';
 
 export function HolidaysView() {
@@ -17,6 +19,7 @@ export function HolidaysView() {
   const [holidays, setHolidays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [successToast, setSuccessToast] = useState(null);
   const [showAllHolidays, setShowAllHolidays] = useState(false);
 
   // Filters
@@ -39,7 +42,9 @@ export function HolidaysView() {
     try {
       const res = await api.getHolidays();
       const list = Array.isArray(res) ? res : (res.results || []);
+      const count = res?.count ?? list.length;
       setHolidays(list);
+      window.dispatchEvent(new CustomEvent('holidays_updated', { detail: { count } }));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -54,7 +59,7 @@ export function HolidaysView() {
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.date) {
-      alert('Please fill in holiday name and date.');
+      setError('Please fill in holiday name and date.');
       return;
     }
     setSubmitting(true);
@@ -65,13 +70,28 @@ export function HolidaysView() {
         holiday_type: form.holiday_type,
         description: form.description.trim(),
       });
+      const holidayName = form.name.trim();
       setShowAddModal(false);
       setForm({ name: '', date: '', holiday_type: 'FESTIVAL', description: '' });
-      loadHolidays();
+      await loadHolidays();
+      setSuccessToast(`Holiday "${holidayName}" declared successfully!`);
+      setTimeout(() => setSuccessToast(null), 4000);
     } catch (err) {
-      alert(`Failed to add holiday: ${err.message}`);
+      setError(`Failed to declare holiday: ${err.message}`);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteHoliday = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to remove declared holiday "${name}"?`)) return;
+    try {
+      await api.deleteHoliday(id);
+      await loadHolidays();
+      setSuccessToast(`Holiday "${name}" removed successfully.`);
+      setTimeout(() => setSuccessToast(null), 4000);
+    } catch (err) {
+      setError(`Failed to remove holiday: ${err.message}`);
     }
   };
 
@@ -97,6 +117,17 @@ export function HolidaysView() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
+      {/* Toast Notification */}
+      {successToast && (
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-4 py-2.5 rounded-lg shadow-xl border border-slate-700 animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+          <span className="text-xs font-medium">{successToast}</span>
+          <button onClick={() => setSuccessToast(null)} className="ml-2 text-slate-400 hover:text-white cursor-pointer">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -109,7 +140,7 @@ export function HolidaysView() {
         {isHrOrAdmin && (
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
             <span>Declare New Holiday</span>
@@ -118,9 +149,14 @@ export function HolidaysView() {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>{error}</span>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -149,7 +185,7 @@ export function HolidaysView() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-indigo-600" />
+            <Calendar className="w-4 h-4 text-blue-600" />
             <h2 className="text-sm font-bold text-slate-900">Institutional Holidays Directory</h2>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 ml-1">
               {filteredHolidays.length} Listed
@@ -198,11 +234,22 @@ export function HolidaysView() {
                 <div key={h.id} className="p-3.5 space-y-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-bold text-slate-900 text-xs">{h.name}</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800 border border-slate-200 shrink-0">
-                      {h.holiday_type === 'NATIONAL' ? 'National' :
-                       h.holiday_type === 'FESTIVAL' ? 'Festival' :
-                       h.holiday_type === 'ACADEMIC' ? 'Academic Break' : 'Restricted'}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800 border border-slate-200 shrink-0">
+                        {h.holiday_type === 'NATIONAL' ? 'National' :
+                         h.holiday_type === 'FESTIVAL' ? 'Festival' :
+                         h.holiday_type === 'ACADEMIC' ? 'Academic Break' : 'Restricted'}
+                      </span>
+                      {isHrOrAdmin && (
+                        <button
+                          onClick={() => handleDeleteHoliday(h.id, h.name)}
+                          className="p-1 text-slate-400 hover:text-rose-600 rounded transition cursor-pointer"
+                          title="Remove holiday"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center justify-between text-[11px] text-slate-500">
                     <span className="font-semibold text-slate-700">{formattedDate} ({dayName})</span>
@@ -234,6 +281,7 @@ export function HolidaysView() {
                 <th className="py-2.5 px-4">Holiday Name & Circular</th>
                 <th className="py-2.5 px-4">Classification</th>
                 <th className="py-2.5 px-4 text-right">Observance</th>
+                {isHrOrAdmin && <th className="py-2.5 px-4 text-center w-16">Action</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
@@ -273,12 +321,23 @@ export function HolidaysView() {
                           {h.holiday_type === 'ACADEMIC' ? 'Classes Suspended' : 'University Closed'}
                         </span>
                       </td>
+                      {isHrOrAdmin && (
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            onClick={() => handleDeleteHoliday(h.id, h.name)}
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                            title={`Remove holiday ${h.name}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center text-slate-400">
+                  <td colSpan={isHrOrAdmin ? 5 : 4} className="py-8 text-center text-slate-400">
                     No holidays matched current search or filter.
                   </td>
                 </tr>
@@ -291,7 +350,7 @@ export function HolidaysView() {
           <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
             <button
               onClick={() => setShowAllHolidays(!showAllHolidays)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-xl transition shadow-2xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 bg-white hover:bg-blue-50 border border-blue-200 rounded-xl transition shadow-2xs cursor-pointer"
             >
               <span>{showAllHolidays ? 'Show Less' : `View More (${filteredHolidays.length - 4} More Holidays)`}</span>
               {showAllHolidays ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -306,7 +365,7 @@ export function HolidaysView() {
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-indigo-600" />
+                <Calendar className="w-4 h-4 text-blue-600" />
                 <span>Declare Institutional Holiday</span>
               </h3>
               <button
@@ -326,7 +385,7 @@ export function HolidaysView() {
                   placeholder="e.g. Founders Day Recess"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold"
                 />
               </div>
 
@@ -337,7 +396,7 @@ export function HolidaysView() {
                   required
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold"
                 />
               </div>
 
@@ -362,7 +421,7 @@ export function HolidaysView() {
                   placeholder="Brief description or official circular notice..."
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -377,7 +436,7 @@ export function HolidaysView() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs transition"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs transition"
                 >
                   {submitting ? 'Declaring...' : 'Declare Holiday'}
                 </button>
@@ -389,3 +448,5 @@ export function HolidaysView() {
     </div>
   );
 }
+
+export default HolidaysView;

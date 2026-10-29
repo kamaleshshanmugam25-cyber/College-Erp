@@ -166,6 +166,7 @@ export const api = {
 
   // Holidays API
   getHolidays: () => apiRequest('/api/holidays/'),
+  deleteHoliday: (id) => apiRequest(`/api/holidays/${id}/`, { method: 'DELETE' }),
   createHoliday: (data) => apiRequest('/api/holidays/', {
     method: 'POST',
     body: JSON.stringify(data),

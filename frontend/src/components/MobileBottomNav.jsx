@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
@@ -16,6 +17,36 @@ import {
 
 export function MobileBottomNav({ activeTab, setActiveTab }) {
   const { user, hasRole } = useAuth();
+  const [holidayCount, setHolidayCount] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchHolidayCount = async () => {
+      try {
+        const res = await api.getHolidays();
+        const count = res?.count ?? (Array.isArray(res) ? res.length : (res?.results?.length ?? 0));
+        if (isMounted) setHolidayCount(count);
+      } catch (err) {
+        // fallback
+      }
+    };
+
+    fetchHolidayCount();
+
+    const handleHolidayUpdate = (e) => {
+      if (e?.detail?.count !== undefined) {
+        setHolidayCount(e.detail.count);
+      } else {
+        fetchHolidayCount();
+      }
+    };
+
+    window.addEventListener('holidays_updated', handleHolidayUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('holidays_updated', handleHolidayUpdate);
+    };
+  }, []);
 
   const isSuper = hasRole('Super Admin');
   const isFinance = isSuper || hasRole('Finance Admin');
@@ -45,14 +76,14 @@ export function MobileBottomNav({ activeTab, setActiveTab }) {
     navItems = [
       { id: 'attendance-leaves', label: 'Attendance', icon: CalendarCheck2 },
       { id: 'employee-lifecycle', label: 'Staff Dir', icon: Users },
-      { id: 'holidays', label: 'Holidays', icon: Calendar },
+      { id: 'holidays', label: `Holidays${holidayCount !== null ? ` (${holidayCount})` : ''}`, icon: Calendar },
       { id: 'performance-appraisal', label: 'Appraisals', icon: TrendingUp },
     ];
   } else if (isStudent) {
     navItems = [
       { id: 'student-portal', label: 'My Dues', icon: Receipt },
       { id: 'student-scholarships', label: 'Waivers', icon: Award },
-      { id: 'academic-calendar', label: 'Calendar', icon: Calendar },
+      { id: 'academic-calendar', label: `Calendar${holidayCount !== null ? ` (${holidayCount})` : ''}`, icon: Calendar },
     ];
   } else if (isEmployee) {
     navItems = [
@@ -97,3 +128,5 @@ export function MobileBottomNav({ activeTab, setActiveTab }) {
     </nav>
   );
 }
+
+export default MobileBottomNav;
