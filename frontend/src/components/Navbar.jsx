@@ -81,8 +81,8 @@ export function Navbar({ activeTab, setActiveTab }) {
   return (
     <header className="h-14 md:h-16 bg-white border-b border-slate-200 sticky top-0 z-50 flex items-center justify-between px-3 md:px-6 shadow-xs">
       <div className="flex items-center gap-2.5 md:gap-3.5">
-        <div className="h-9 md:h-10 px-2.5 py-0.5 rounded-xl bg-white border border-slate-200/90 shadow-xs flex items-center justify-center shrink-0">
-          <img src="/vdart-logo.png" alt="VDart Academy Logo" className="h-7 md:h-8 w-auto object-contain" />
+        <div className="h-9 md:h-10 w-9 md:w-10 rounded-xl bg-white border border-slate-200/90 shadow-xs flex items-center justify-center shrink-0 p-1">
+          <img src="/vdart-logo.png" alt="VDart Academy Logo" className="h-5 md:h-6 w-auto object-contain" />
         </div>
         <div>
           <div className="flex items-center gap-1.5 md:gap-2">
