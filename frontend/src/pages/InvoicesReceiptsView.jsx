@@ -822,13 +822,13 @@ export function InvoicesReceiptsView() {
               <div className="text-center border-b border-slate-300 pb-4">
                 <div className="flex items-center justify-center gap-2 text-slate-900 font-extrabold text-lg sm:text-xl tracking-tight">
                   <img src="/vdart-logo.png" alt="VDart Logo" className="h-7 w-auto object-contain inline-block mr-1" />
-                  <span>VDART HIGHER EDUCATION INSTITUTE</span>
+                  <span>VDART ACADEMY</span>
                 </div>
                 <p className="text-[11px] font-semibold tracking-wide text-slate-600 uppercase mt-0.5">
                   Office of the Comptroller of Accounts & Student Treasury
                 </p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  Institutional Campus • Approved by Higher Education Authority • Affiliated Institution
+                  A Global Entity of VDart Inc. • Institutional Campus • Approved Higher Education
                 </p>
 
                 <div className="mt-2.5 inline-block border border-slate-900 px-3 py-0.5 text-slate-900 text-[11px] font-bold uppercase tracking-wider rounded">
@@ -1026,7 +1026,7 @@ export function InvoicesReceiptsView() {
               <div className="text-center border-b border-slate-300 pb-4">
                 <div className="flex items-center justify-center gap-2 text-slate-900 font-extrabold text-lg sm:text-xl tracking-tight">
                   <img src="/vdart-logo.png" alt="VDart Logo" className="h-7 w-auto object-contain inline-block mr-1" />
-                  <span>VDART HIGHER EDUCATION INSTITUTE</span>
+                  <span>VDART ACADEMY</span>
                 </div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 mt-0.5">
                   Office of Student Accounts & Finance Treasury

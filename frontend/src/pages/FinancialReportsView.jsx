@@ -677,10 +677,10 @@ export function FinancialReportsView() {
               <div className="text-center border-b-2 border-slate-900 pb-4">
                 <div className="flex items-center justify-center gap-2 text-slate-900 font-extrabold text-xl tracking-tight">
                   <img src="/vdart-logo.png" alt="VDart Logo" className="h-8 w-auto object-contain inline-block mr-1" />
-                  <span>VDART HIGHER EDUCATION INSTITUTE</span>
+                  <span>VDART ACADEMY</span>
                 </div>
                 <p className="text-[11px] uppercase font-bold tracking-wider text-slate-600 mt-1">
-                  Office of the Comptroller & Finance Treasury • Audited Accounts Department
+                  A Global Entity of VDart Inc. • Office of the Comptroller & Finance Treasury
                 </p>
                 <div className="mt-3 inline-block bg-slate-900 text-white text-[11px] font-bold uppercase tracking-widest px-3 py-0.5 rounded">
                   OFFICIAL AUDITED STATEMENT OF FINANCIAL ACCOUNTS

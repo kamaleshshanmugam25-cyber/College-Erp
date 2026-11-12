@@ -171,7 +171,7 @@ export function Sidebar({ activeTab, setActiveTab }) {
 
       {/* Clean Sidebar Footer */}
       <div className="p-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-[10px] text-slate-400">
-        <span>VDart ERP System v2.4</span>
+        <span>VDart Academy ERP v2.4</span>
         <span className="flex items-center gap-1 text-emerald-600 font-semibold">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           Live

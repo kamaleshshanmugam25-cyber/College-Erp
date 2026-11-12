@@ -120,18 +120,18 @@ export function LoginPage() {
                 <KeyRound className="w-6 h-6" />
               </div>
             ) : (
-              <div className="px-4 py-2 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex items-center justify-center">
-                <img src="/vdart-logo.png" alt="VDart ERP System" className="h-12 w-auto object-contain" />
+              <div className="px-5 py-3 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex items-center justify-center">
+                <img src="/vdart-logo.png" alt="VDart Academy ERP System" className="h-14 sm:h-16 w-auto object-contain" />
               </div>
             )}
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            {mode === 'forgot' ? 'Reset Password' : 'VDart ERP System'}
+            {mode === 'forgot' ? 'Reset Password' : 'VDart Academy ERP'}
           </h1>
           <p className="text-xs text-slate-500 font-medium">
             {mode === 'forgot'
               ? 'Recover your portal access credentials'
-              : 'Institutional Finance, General Ledger & Faculty HR'}
+              : 'A Global Entity of VDart Inc. · Institutional Finance, Fees & HR'}
           </p>
         </div>
 
