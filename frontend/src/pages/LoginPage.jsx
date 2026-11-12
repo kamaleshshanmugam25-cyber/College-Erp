@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Building2, 
+  Building2,
+  GraduationCap, 
   AlertCircle,
   CheckCircle2,
   ArrowRight,
@@ -15,6 +16,7 @@ export function LoginPage() {
   
   // Modes: 'login' | 'register' | 'forgot'
   const [mode, setMode] = useState('login');
+  const [portalTab, setPortalTab] = useState('staff');
 
   // Login form state
   const [username, setUsername] = useState('');
