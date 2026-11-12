@@ -70,11 +70,39 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const ROLE_CREDENTIALS = {
+    'Super Admin': { username: 'SuperAdmin', password: 'password123' },
+    'Finance Admin': { username: 'finance', password: 'password123' },
+    'Finance User': { username: 'financeuser', password: 'password123' },
+    'Accountant': { username: 'accountant', password: 'password123' },
+    'HR Admin': { username: 'HrAdmin', password: 'password123' },
+    'Employee': { username: 'empl', password: 'password123' },
+    'Employee / Faculty': { username: 'empl', password: 'password123' },
+    'Student/Parent': { username: 'student', password: 'password123' },
+    'Student / Parent': { username: 'student', password: 'password123' },
+  };
+
   const switchRole = async (roleName) => {
-    const res = await api.login({ demo_role: roleName });
-    if (res?.success && res.user) {
-      setUser(res.user);
-      return res.user;
+    const creds = ROLE_CREDENTIALS[roleName];
+    if (creds) {
+      try {
+        const res = await api.login(creds);
+        if (res?.success && res.user) {
+          setUser(res.user);
+          return res.user;
+        }
+      } catch (err) {
+        console.warn('Role switch with credentials failed:', err);
+      }
+    }
+    try {
+      const res = await api.login({ demo_role: roleName });
+      if (res?.success && res.user) {
+        setUser(res.user);
+        return res.user;
+      }
+    } catch {
+      // fallback
     }
     return null;
   };
