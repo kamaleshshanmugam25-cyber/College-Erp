@@ -103,7 +103,7 @@ export function StudentPortal() {
   const currentRollNo = fees[0]?.roll_no || studentInfo?.roll_no || user?.profile?.roll_no || '2026-BSC-003';
   const currentCourse = fees[0]?.course_name || studentInfo?.course_name || 'BSc Computer Science';
   const currentCourseCode = fees[0]?.course_code || studentInfo?.course_code || 'CS-BSC';
-  const currentEmail = studentInfo?.email || user?.email || `${currentRollNo.toLowerCase()}@student.apex.edu`;
+  const currentEmail = studentInfo?.email || user?.email || `${currentRollNo.toLowerCase()}@student.vdart.com`;
   const currentSession = fees[0]?.academic_year || studentInfo?.academic_year || '2026-27';
 
   if (loading && fees.length === 0 && !meta) {

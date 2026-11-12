@@ -153,18 +153,24 @@ export function LoginPage() {
     <div className="h-full w-full bg-slate-50 overflow-y-auto px-4 sm:px-6 lg:px-8">
       <div className="min-h-full flex flex-col justify-center py-10 sm:py-14 sm:mx-auto sm:w-full sm:max-w-lg">
         {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-blue-700 text-white flex items-center justify-center mx-auto shadow-md">
+        <div className="text-center space-y-2.5">
+          <div className="flex items-center justify-center">
             {mode === 'register' ? (
-              <UserPlus className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-2xl bg-blue-700 text-white flex items-center justify-center shadow-md">
+                <UserPlus className="w-6 h-6" />
+              </div>
             ) : mode === 'forgot' ? (
-              <KeyRound className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-2xl bg-blue-700 text-white flex items-center justify-center shadow-md">
+                <KeyRound className="w-6 h-6" />
+              </div>
             ) : (
-              <Building2 className="w-6 h-6" />
+              <div className="px-4 py-2 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex items-center justify-center">
+                <img src="/vdart-logo.png" alt="VDart ERP System" className="h-12 w-auto object-contain" />
+              </div>
             )}
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            {mode === 'register' ? 'Create an Account' : mode === 'forgot' ? 'Reset Password' : 'Apex University ERP'}
+            {mode === 'register' ? 'Create an Account' : mode === 'forgot' ? 'Reset Password' : 'VDart ERP System'}
           </h1>
           <p className="text-xs text-slate-500 font-medium">
             {mode === 'register' 
@@ -201,7 +207,7 @@ export function LoginPage() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. admin or faculty@apex.edu"
+                  placeholder="e.g. admin or faculty@vdart.com"
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
               </div>
@@ -318,7 +324,7 @@ export function LoginPage() {
                     required
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
-                    placeholder="name@apex.edu"
+                    placeholder="name@vdart.com"
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
                   />
                 </div>

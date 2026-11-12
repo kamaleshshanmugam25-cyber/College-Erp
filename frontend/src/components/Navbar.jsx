@@ -33,14 +33,14 @@ export function Navbar({ activeTab, setActiveTab }) {
 
   return (
     <header className="h-14 md:h-16 bg-white border-b border-slate-200 sticky top-0 z-50 flex items-center justify-between px-3 md:px-6 shadow-xs">
-      <div className="flex items-center gap-2 md:gap-3">
-        <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-blue-700 flex items-center justify-center text-white shadow-sm shrink-0">
-          <Building2 className="w-5 h-5 md:w-6 md:h-6" />
+      <div className="flex items-center gap-2.5 md:gap-3.5">
+        <div className="h-9 md:h-10 px-2 py-0.5 rounded-xl bg-white border border-slate-200/90 shadow-xs flex items-center justify-center shrink-0">
+          <img src="/vdart-logo.png" alt="VDart Logo" className="h-7 md:h-8 w-auto object-contain" />
         </div>
         <div>
           <div className="flex items-center gap-1.5 md:gap-2">
-            <span className="font-extrabold text-slate-900 tracking-tight text-xs md:text-base">APEX ERP</span>
-            <span className="hidden sm:inline-block text-[10px] md:text-xs uppercase tracking-wider font-semibold px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-200">
+            <span className="font-extrabold text-slate-900 tracking-tight text-xs md:text-base">VDART ERP</span>
+            <span className="hidden sm:inline-block text-[10px] md:text-xs uppercase tracking-wider font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-200">
               System
             </span>
           </div>

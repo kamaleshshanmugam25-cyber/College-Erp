@@ -87,7 +87,7 @@ export function FinancialReportsView() {
   };
 
   const exportCurrentStatement = () => {
-    let filename = `Apex_Financial_Statement_${activeTab}_${fiscalYear}.csv`;
+    let filename = `VDart_Financial_Statement_${activeTab}_${fiscalYear}.csv`;
     let csvContent = '';
 
     if (activeTab === 'income-expenditure') {
@@ -676,8 +676,8 @@ export function FinancialReportsView() {
               {/* Institutional Header */}
               <div className="text-center border-b-2 border-slate-900 pb-4">
                 <div className="flex items-center justify-center gap-2 text-slate-900 font-extrabold text-xl tracking-tight">
-                  <Building2 className="w-6 h-6 text-blue-700" />
-                  <span>APEX HIGHER EDUCATION INSTITUTE</span>
+                  <img src="/vdart-logo.png" alt="VDart Logo" className="h-8 w-auto object-contain inline-block mr-1" />
+                  <span>VDART HIGHER EDUCATION INSTITUTE</span>
                 </div>
                 <p className="text-[11px] uppercase font-bold tracking-wider text-slate-600 mt-1">
                   Office of the Comptroller & Finance Treasury • Audited Accounts Department
@@ -764,7 +764,7 @@ export function FinancialReportsView() {
 
               {/* Statutory Exemption & Compliance Note */}
               <div className="border border-slate-200 bg-slate-50 rounded-lg p-2.5 mb-4 text-[11px] text-slate-700">
-                <span className="font-bold">Statutory Exemption Certificate:</span> All higher education tuition, laboratory subscriptions, and examination fees collected by Apex Higher Education Institute are exempt from GST under Notification No. 12/2017 - Central Tax (Rate), SAC Code 9992. Accounts maintained on Double-Entry System under GAAP standards.
+                <span className="font-bold">Statutory Exemption Certificate:</span> All higher education tuition, laboratory subscriptions, and examination fees collected by VDart Higher Education Institute are exempt from GST under Notification No. 12/2017 - Central Tax (Rate), SAC Code 9992. Accounts maintained on Double-Entry System under GAAP standards.
               </div>
 
               {/* Signatures & Seal */}

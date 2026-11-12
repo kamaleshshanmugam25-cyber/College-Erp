@@ -654,7 +654,7 @@ export function EmployeeLifecycleView() {
                   <input
                     type="email"
                     required
-                    placeholder="rajesh@apex.edu"
+                    placeholder="rajesh@vdart.com"
                     value={onboardForm.email}
                     onChange={(e) => setOnboardForm({ ...onboardForm, email: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white"

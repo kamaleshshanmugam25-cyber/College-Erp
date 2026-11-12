@@ -719,7 +719,7 @@ export function UserManagementView() {
                 <input
                   type="email"
                   required
-                  placeholder="ramesh@apex.edu"
+                  placeholder="ramesh@vdart.com"
                   value={createForm.email}
                   onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
                   className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"

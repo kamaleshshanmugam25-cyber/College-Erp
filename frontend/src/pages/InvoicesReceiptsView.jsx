@@ -248,7 +248,7 @@ export function InvoicesReceiptsView() {
     let referenceNote = '';
     if (counterForm.method === 'UPI') {
       const upiRef = counterForm.upi_ref.trim() || `UPI${Math.floor(100000000000 + Math.random() * 900000000000)}`;
-      referenceNote = `UPI QR Payment | Ref/UTR: ${upiRef} | VPA: apex.fees@icici`;
+      referenceNote = `UPI QR Payment | Ref/UTR: ${upiRef} | VPA: vdart.fees@icici`;
     } else if (counterForm.method === 'NET_BANKING') {
       const utr = counterForm.bank_utr.trim() || `SBIN${Math.floor(100000000 + Math.random() * 900000000)}`;
       referenceNote = `Net Banking (NEFT/RTGS) | UTR: ${utr} | A/C: 50200038912844`;
@@ -821,8 +821,8 @@ export function InvoicesReceiptsView() {
               {/* Institution Header with Clean Typography */}
               <div className="text-center border-b border-slate-300 pb-4">
                 <div className="flex items-center justify-center gap-2 text-slate-900 font-extrabold text-lg sm:text-xl tracking-tight">
-                  <Building2 className="w-5 h-5 text-blue-700" />
-                  <span>APEX HIGHER EDUCATION INSTITUTE</span>
+                  <img src="/vdart-logo.png" alt="VDart Logo" className="h-7 w-auto object-contain inline-block mr-1" />
+                  <span>VDART HIGHER EDUCATION INSTITUTE</span>
                 </div>
                 <p className="text-[11px] font-semibold tracking-wide text-slate-600 uppercase mt-0.5">
                   Office of the Comptroller of Accounts & Student Treasury
@@ -1025,8 +1025,8 @@ export function InvoicesReceiptsView() {
             <div className="p-6 sm:p-8 text-slate-900 bg-white">
               <div className="text-center border-b border-slate-300 pb-4">
                 <div className="flex items-center justify-center gap-2 text-slate-900 font-extrabold text-lg sm:text-xl tracking-tight">
-                  <Building2 className="w-5 h-5 text-blue-700" />
-                  <span>APEX HIGHER EDUCATION INSTITUTE</span>
+                  <img src="/vdart-logo.png" alt="VDart Logo" className="h-7 w-auto object-contain inline-block mr-1" />
+                  <span>VDART HIGHER EDUCATION INSTITUTE</span>
                 </div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 mt-0.5">
                   Office of Student Accounts & Finance Treasury
@@ -1345,10 +1345,10 @@ export function InvoicesReceiptsView() {
                       <div>
                         <div className="text-slate-400 font-semibold uppercase text-[10px]">Institutional UPI ID</div>
                         <div className="flex items-center gap-1.5 font-mono font-bold text-slate-900">
-                          <span>apex.fees@icici</span>
+                          <span>vdart.fees@icici</span>
                           <button
                             type="button"
-                            onClick={() => copyToClipboard('apex.fees@icici', 'upi')}
+                            onClick={() => copyToClipboard('vdart.fees@icici', 'upi')}
                             className="p-1 hover:bg-slate-100 rounded text-slate-500 cursor-pointer"
                             title="Copy UPI ID"
                           >
@@ -1399,7 +1399,7 @@ export function InvoicesReceiptsView() {
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <div className="text-slate-400 uppercase text-[10px]">Beneficiary</div>
-                        <div className="font-semibold text-slate-900">Apex Higher Education Institute</div>
+                        <div className="font-semibold text-slate-900">VDart Higher Education Institute</div>
                       </div>
                       <div>
                         <div className="text-slate-400 uppercase text-[10px]">Bank & Branch</div>
