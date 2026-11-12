@@ -68,8 +68,8 @@ function MainApp() {
       const isSuper = hasRole('Super Admin');
       const isFinance = isSuper || hasRole('Finance Admin', 'Finance User', 'Accountant');
       const isHR = isSuper || hasRole('HR Admin');
-      const isStudent = hasRole('Student/Parent');
-      const isEmployee = hasRole('Employee');
+      const isStudent = hasRole('Student/Parent', 'Student / Parent') || user?.username === 'student';
+      const isEmployee = hasRole('Employee', 'Employee / Faculty') || user?.username === 'empl';
 
       let targetTab = getSavedTab() || activeTab;
 

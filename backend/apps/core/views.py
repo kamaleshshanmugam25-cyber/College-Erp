@@ -172,6 +172,10 @@ def get_accessible_modules_for_user(user) -> list:
     if Roles.SUPER_ADMIN in roles:
         return ALL_MODULE_IDS
 
+    # Ensure Student/Parent users always receive their dedicated student portal modules
+    if Roles.STUDENT_PARENT in roles or "Student/Parent" in roles or "Student / Parent" in roles:
+        return list(DEFAULT_ROLE_ACCESS.get(Roles.STUDENT_PARENT, ["student-portal", "student-scholarships", "academic-calendar"]))
+
     # Check if user has explicit custom module assignment from Finance Admin
     profile = getattr(user, "erp_profile", None)
     if profile and profile.has_custom_permissions and isinstance(profile.custom_modules, list):

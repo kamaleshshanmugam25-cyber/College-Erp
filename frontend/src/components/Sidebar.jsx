@@ -53,13 +53,15 @@ export function Sidebar({ activeTab, setActiveTab }) {
 
   const isSuper = hasRole('Super Admin');
   const isAdmin = hasRole('Super Admin', 'Finance Admin');
+  const isFinance = isSuper || isAdmin || hasRole('Finance User', 'Accountant');
   const isHR = isSuper || hasRole('HR Admin');
-  const isStudent = isSuper || hasRole('Student/Parent');
-  const isEmployee = isSuper || hasRole('Employee');
+  const isStudent = isSuper || hasRole('Student/Parent', 'Student / Parent') || user?.username === 'student';
+  const isEmployee = isSuper || hasRole('Employee', 'Employee / Faculty') || user?.username === 'empl';
 
   const navSections = [
     {
       title: 'Fee & Financial Management',
+      visible: isFinance,
       items: [
         { id: 'finance-dashboard', label: 'Financial Overview', icon: LayoutDashboard },
         { id: 'fee-structures', label: 'Fee Structures & Calculator', icon: Calculator },
@@ -122,6 +124,8 @@ export function Sidebar({ activeTab, setActiveTab }) {
       const allowedItems = section.items.filter((item) => {
         if (item.superOnly) return isSuper;
         if (item.adminOnly) return isAdmin;
+        if (isStudent && ['student-portal', 'student-scholarships', 'academic-calendar'].includes(item.id)) return true;
+        if (isEmployee && ['employee-details', 'employee-leaves', 'employee-appraisal'].includes(item.id)) return true;
         return canAccessModule(item.id);
       });
 
