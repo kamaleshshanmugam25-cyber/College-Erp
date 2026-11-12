@@ -51,8 +51,8 @@ export function MobileBottomNav({ activeTab, setActiveTab }) {
   const isSuper = hasRole('Super Admin');
   const isFinance = isSuper || hasRole('Finance Admin');
   const isHR = isSuper || hasRole('HR Admin');
-  const isStudent = isSuper || hasRole('Student/Parent');
-  const isEmployee = isSuper || hasRole('Employee');
+  const isStudent = isSuper || hasRole('Student/Parent', 'Student / Parent') || user?.username === 'student';
+  const isEmployee = isSuper || hasRole('Employee', 'Employee / Faculty') || user?.username === 'empl';
 
   // Direct tabs based on what the active login wants/needs
   let navItems = [];

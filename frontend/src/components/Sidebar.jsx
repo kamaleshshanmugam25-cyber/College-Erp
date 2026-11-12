@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export function Sidebar({ activeTab, setActiveTab }) {
-  const { hasRole, canAccessModule } = useAuth();
+  const { user, hasRole, canAccessModule } = useAuth();
   const [holidayCount, setHolidayCount] = useState(null);
 
   useEffect(() => {
